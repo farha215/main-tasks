@@ -16,6 +16,7 @@
 #include "raspi.hpp"
 #include "pressure.hpp"
 
+volatile bool esc_flag = false;
 volatile bool stb_flag = false;
 bool nav_data_flag = false;
 bool nav_time_out = true;       //starts is safe consdition
@@ -27,17 +28,40 @@ absolute_time_t stopper = get_absolute_time();
 
 struct repeating_timer control_timer;
 
-bool control_timer_cb(struct repeating_timer* t)
-{
-    stb_flag = true;
+bool control_timer_cb(struct repeating_timer* t) {
+    static uint32_t count = 0;
+
+    esc_flag = true;
+
+    if (++count >= STB_LOOP_MS) {
+        count = 0;
+        stb_flag = true;
+    }
     return true;
 }
 
 State state;
 Throttle throttle;
 
-void core1_entry() {}
+void core1_entry() {
+    for (;;) {
+        nav_data_flag = raspi::update();
+        raspi::sendpres();
 
+        if (nav_data_flag) {
+            new_nav_data_time = get_absolute_time();
+            float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
+            last_nav_data_time = new_nav_data_time;
+            nav_time_out = false;
+            control::navUpdate(0.001);          //change the dt here, its supposed to be nav_dt but not working maybe because too fast or, nav_ft becomes 0 becuase number too small ig
+        }
+        if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
+            control::navStop();
+            nav_time_out = true;
+        }
+        sleep_ms(500);
+    }
+}
 int main(void) {
 
     stdio_init_all();
@@ -73,12 +97,7 @@ int main(void) {
     printf("program initialised\n");
 #endif
 
-    add_repeating_timer_ms(
-        -STB_LOOP_MS,
-        control_timer_cb,
-        NULL,
-        &control_timer
-    );
+    add_repeating_timer_ms(-1, control_timer_cb, NULL, &control_timer);
 
     for (;;) {
 
@@ -86,32 +105,17 @@ int main(void) {
             stb_flag = false;
             imu::update();
             presens::read();
+            control::stbUpdate();
 #if DEBUG_MODE
             printf("%f\t%f\t\t", state.roll, state.pitch);
             printf("%f\t\t", state.z);
             printf("%d\t%d\t%d\t%d\t%d\n", throttle.VB, throttle.VR, throttle.VL, throttle.HL, throttle.HR);
 #endif
-            control::stbUpdate();
         }
 
-#if !DEBUG_MODE
-        nav_data_flag = raspi::update();
-        raspi::sendpres();
-
-        if (nav_data_flag) {
-            new_nav_data_time = get_absolute_time();
-            float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
-            last_nav_data_time = new_nav_data_time;
-            nav_time_out = false;
-            control::navUpdate(0.001);          //change the dt here, its supposed to be nav_dt but not working maybe because too fast or, nav_ft becomes 0 becuase number too small ig
+        if (esc_flag) {
+            esc_flag = false;
+            esc::thrust();
         }
-        if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
-            control::navStop();
-            nav_time_out = true;
-        }
-#endif
-        esc::thrust();
-
-        sleep_us(750);
     }
 }
