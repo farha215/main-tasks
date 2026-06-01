@@ -83,6 +83,10 @@ int main(void) {
     raspi::init();
     // raspi::blockforMPU();
 
+    gpio_init(DEBUG_PIN);
+    gpio_set_dir(DEBUG_PIN, GPIO_OUT);
+    gpio_put(DEBUG_PIN, 0);
+
     imu::init();
     presens::init();
     control::init();
@@ -103,9 +107,11 @@ int main(void) {
 
         if (stb_flag) {
             stb_flag = false;
+            gpio_put(DEBUG_PIN, 1);
             imu::update();
             presens::read();
             control::stbUpdate();
+            gpio_put(DEBUG_PIN, 0);
 #if DEBUG_MODE
             printf("%f\t%f\t\t", state.roll, state.pitch);
             printf("%f\t\t", state.z);
