@@ -92,7 +92,6 @@ int main(void) {
 
     imu::init();
     presens::init();
-    control::init();
 
     multicore_launch_core1(core1_entry);
 

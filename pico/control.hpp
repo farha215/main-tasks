@@ -9,7 +9,6 @@
 
 class control {
 public:
-    static void init();
     static void stbUpdate();
     static void navUpdate(float nav_dt);
     static void navStop();
