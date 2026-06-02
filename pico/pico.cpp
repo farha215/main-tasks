@@ -16,8 +16,6 @@
 #include "raspi.hpp"
 #include "pressure.hpp"
 
-volatile bool esc_flag = false;
-volatile bool stb_flag = false;
 bool nav_data_flag = false;
 bool nav_time_out = true;       //starts is safe consdition
 
@@ -27,15 +25,15 @@ absolute_time_t new_nav_data_time = get_absolute_time();
 absolute_time_t stopper = get_absolute_time();
 
 struct repeating_timer control_timer;
+volatile bool esc_flag = false;
+static uint32_t timer_count = 0;
 
 bool control_timer_cb(struct repeating_timer* t) {
-    static uint32_t count = 0;
 
     esc_flag = true;
 
-    if (++count >= STB_LOOP_MS) {
-        count = 0;
-        stb_flag = true;
+    if (++timer_count >= STB_LOOP_MS) {
+        timer_count = 0;
     }
     return true;
 }
@@ -45,20 +43,25 @@ Throttle throttle;
 
 void core1_entry() {
     for (;;) {
-        nav_data_flag = raspi::update();
-        raspi::sendpres();
+        // nav_data_flag = raspi::update();
+        // raspi::sendpres();
 
-        if (nav_data_flag) {
-            new_nav_data_time = get_absolute_time();
-            float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
-            last_nav_data_time = new_nav_data_time;
-            nav_time_out = false;
-            control::navUpdate(0.001);          //change the dt here, its supposed to be nav_dt but not working maybe because too fast or, nav_ft becomes 0 becuase number too small ig
-        }
-        if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
-            control::navStop();
-            nav_time_out = true;
-        }
+        // if (nav_data_flag) {
+        //     new_nav_data_time = get_absolute_time();
+        //     float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
+        //     last_nav_data_time = new_nav_data_time;
+        //     nav_time_out = false;
+        //     control::navUpdate(0.001);          //change the dt here, its supposed to be nav_dt but not working maybe because too fast or, nav_ft becomes 0 becuase number too small ig
+        // }
+        // if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
+        //     control::navStop();
+        //     nav_time_out = true;
+        // }
+#if DEBUG_MODE
+        printf("%f\t%f\t\t", state.roll, state.pitch);
+        printf("%f\t\t", state.z);
+        printf("%d\t%d\t%d\t%d\t%d\n", throttle.VB, throttle.VR, throttle.VL, throttle.HL, throttle.HR);
+#endif
         sleep_ms(500);
     }
 }
@@ -105,33 +108,55 @@ int main(void) {
 
     for (;;) {
 
-        if (stb_flag) {
-            stb_flag = false;
-
-            imu::ask_euler();
-            imu::read_euler();
-            imu::ask_gyro();
-            imu::read_gyro();
-
-            presens::ask_D1_5();
-            sleep_ms(5);
-            presens::read_D1_0();
-            presens::ask_D2_5();
-            sleep_ms(5);
-            presens::read_D2_0();
-            presens::calc_depth_0();
-            control::stbUpdate();
-
-            #if DEBUG_MODE
-                        printf("%f\t%f\t\t", state.roll, state.pitch);
-                        printf("%f\t\t", state.z);
-                        printf("%d\t%d\t%d\t%d\t%d\n", throttle.VB, throttle.VR, throttle.VL, throttle.HL, throttle.HR);
-            #endif
-        }
-
         if (esc_flag) {
             esc_flag = false;
+            uint32_t control_count = timer_count;
             esc::thrust();
+
+            switch (control_count) {
+            case 1:
+                imu::ask_euler();
+                break;
+            case 3:
+                imu::read_euler();
+                break;
+            case 4:
+                imu::ask_gyro();
+                break;
+            case 5:
+                imu::read_gyro();
+                break;
+            case 6:
+                presens::ask_D1_5();
+                break;
+            case 11:
+                presens::read_D1_0();
+                presens::ask_D2_5();
+                break;
+            case 16:
+                presens::read_D2_0();
+                presens::calc_depth_0();
+                control::stbUpdate();
+                break;
+
+            default:
+                break;
+            }
         }
+
+        // imu::ask_euler();
+        // imu::read_euler();
+        // imu::ask_gyro();
+        // imu::read_gyro();
+
+        // presens::ask_D1_5();
+        // sleep_ms(5);
+        // presens::read_D1_0();
+        // presens::ask_D2_5();
+        // sleep_ms(5);
+        // presens::read_D2_0();
+        // presens::calc_depth_0();
+        // control::stbUpdate();
+
     }
 }
