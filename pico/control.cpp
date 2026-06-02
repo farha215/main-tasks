@@ -28,8 +28,7 @@ float K_tau[2][2] = {
 
 // constants
 const float STB_LOOP_DT = STB_LOOP_MS / 1000.0f;
-float u_smooth[3] = { 0, 0, 0 };
-const float U_MAX = 1.0;
+
 const float Fz_eq = -33.5;
 const float F_MIN = -23.3f;
 const float F_MAX = 29.8f;
