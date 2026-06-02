@@ -23,7 +23,7 @@ uint8_t buffer[6];
 
 void imu::init() {
 
-    i2c_init(BNO055_PORT, 400 * 1000);
+    i2c_init(BNO055_PORT, 100 * 1000);
     gpio_set_function(BNO055_SDA, GPIO_FUNC_I2C);
     gpio_set_function(BNO055_SCL, GPIO_FUNC_I2C);
     gpio_pull_up(BNO055_SDA);
