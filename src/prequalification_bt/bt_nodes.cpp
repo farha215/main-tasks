@@ -23,34 +23,42 @@ BT::NodeStatus AllSystemsOK::tick() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
+    // Evaluate every sensor condition into a single flag.
+    // All failures are logged simultaneously so you can see everything that's wrong at once.
+    bool all_ok = true;
+
     if (!ctx->imu_received) {
-        RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000, 
+        RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
                              "[AllSystemsOK] Waiting for /imu ...");
-        return BT::NodeStatus::RUNNING;
+        all_ok = false;
     }
 
     if (!ctx->altimeter_received) {
         RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
-            "[AllSystemsOK] Waiting for /altimeter ...");
-        return BT::NodeStatus::RUNNING;
+                             "[AllSystemsOK] Waiting for /altimeter ...");
+        all_ok = false;
     }
 
     if (!ctx->zed_ok) {
         RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
-            "[AllSystemsOK] ZED diagnostic...");
-        return BT::NodeStatus::RUNNING;
+                             "[AllSystemsOK] ZED camera not healthy.");
+        all_ok = false;
     }
 
     if (!ctx->image_received) {
         RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
-            "[AllSystemsOK] Waiting for image stream ...");
-        return BT::NodeStatus::RUNNING;
+                             "[AllSystemsOK] Waiting for image stream ...");
+        all_ok = false;
     }
 
     double image_age = ctx->node->get_clock()->now().seconds() - ctx->last_image_t;
-    if (image_age > 1.0) {
+    if (ctx->image_received && image_age > 1.0) {
         RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
-            "[AllSystemsOK] Image stream stale (%.1fs ago) ...", image_age);
+                             "[AllSystemsOK] Image stream stale (%.1fs ago).", image_age);
+        all_ok = false;
+    }
+
+    if (!all_ok) {
         return BT::NodeStatus::RUNNING;
     }
 
