@@ -43,26 +43,28 @@ Throttle throttle;
 
 void core1_entry() {
     for (;;) {
-        // nav_data_flag = raspi::update();
-        // raspi::sendpres();
+#if !DEBUG_MODE
+        nav_data_flag = raspi::update();
+        raspi::sendpres();
 
-        // if (nav_data_flag) {
-        //     new_nav_data_time = get_absolute_time();
-        //     float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
-        //     last_nav_data_time = new_nav_data_time;
-        //     nav_time_out = false;
-        //     control::navUpdate(0.001);          //change the dt here, its supposed to be nav_dt but not working maybe because too fast or, nav_ft becomes 0 becuase number too small ig
-        // }
-        // if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
-        //     control::navStop();
-        //     nav_time_out = true;
-        // }
+        if (nav_data_flag) {
+            new_nav_data_time = get_absolute_time();
+            float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
+            last_nav_data_time = new_nav_data_time;
+            nav_time_out = false;
+            control::navUpdate(0.02);          //change the dt here, its supposed to be nav_dt but not working maybe because too fast or, nav_ft becomes 0 becuase number too small ig
+        }
+        if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
+            control::navStop();
+            nav_time_out = true;
+        }
+#endif
 #if DEBUG_MODE
         printf("%f\t%f\t\t", state.roll, state.pitch);
         printf("%f\t\t", state.z);
         printf("%d\t%d\t%d\t%d\t%d\n", throttle.VB, throttle.VR, throttle.VL, throttle.HL, throttle.HR);
 #endif
-        sleep_ms(500);
+        sleep_ms(20);
     }
 }
 int main(void) {

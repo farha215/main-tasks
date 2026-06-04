@@ -13,26 +13,6 @@ void raspi::init() {
     }
 }
 
-void raspi::blockforMPU() {
-    uint8_t prev = 0;
-    for (;;) {
-        int c = getchar_timeout_us(0);
-        if (c == PICO_ERROR_TIMEOUT)
-            continue;
-        uint8_t curr = (uint8_t)c;
-        if (prev == RASPI_SOF0 &&
-            curr == RASPI_SOF1) {
-            sleep_ms(100);
-            putchar_raw(RASPI_SOF0);
-            putchar_raw(RASPI_SOF1);
-            fflush(stdout);
-            return;
-        }
-        prev = curr;
-    }
-}
-
-
 bool raspi::update() {
 
     while (true) {
