@@ -1,0 +1,23 @@
+<root BTCPP_format="4">
+    <TreeNodesModel>
+        <Condition ID="AllSystemsOK"/>
+        <Action ID="ApproachObject">
+            <input_port name="threshold" type="double"/>
+            <input_port name="object" type="std::string"/>
+        </Action>
+        <Action ID="DiveToDepth">
+            <input_port name="target_depth" type="double"/>
+        </Action>
+        <Action ID="Do360Turn">
+            <input_port name="success_when_seen" type="std::string"/>
+        </Action>
+        <Action ID="DriveThruGate"/>
+        <Condition ID="IsObjectSeen">
+            <input_port name="object" type="std::string"/>
+        </Condition>
+        <Action ID="OrbitPole">
+            <input_port name="staystill" type="double"/>
+            <input_port name="object" type="std::string"/>
+        </Action>
+    </TreeNodesModel>
+</root>

@@ -18,8 +18,7 @@
             min_depth: 0.01 # Min: 0.01, Max: 3.0
             max_depth: 15.0 # Min: 0.5, Max: 20.0
         
-        pos_tracking:
-        	pos_tracking_coord_sys: 'RIGHT_HANDED_Z_UP_X_FORWARD'
+
         object_detection:
             od_enabled: true
             detection_model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS'

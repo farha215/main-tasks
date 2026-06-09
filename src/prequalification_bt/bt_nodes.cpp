@@ -33,11 +33,11 @@ BT::NodeStatus AllSystemsOK::tick() {
         all_ok = false;
     }
 
-    if (!ctx->altimeter_received) {
-        RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
-                             "[AllSystemsOK] Waiting for /altimeter ...");
-        all_ok = false;
-    }
+    // if (!ctx->altimeter_received) {
+    //     RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
+    //                          "[AllSystemsOK] Waiting for /altimeter ...");
+    //     all_ok = false;
+    // }
 
     if (!ctx->zed_ok) {
         RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,

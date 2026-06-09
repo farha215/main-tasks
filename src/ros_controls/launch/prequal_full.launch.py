@@ -5,10 +5,6 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import PushRosNamespace,Node
 from ament_index_python.packages import get_package_share_directory
 
-
-
-
-
 def generate_launch_description():
     zed_launch_path = os.path.join(
         get_package_share_directory('zed_wrapper'),
@@ -44,7 +40,7 @@ def generate_launch_description():
     
     combined_detections_hsv_pose = Node(
     	package='ros_controls',
-    	executable='combined_detections_hsv_pose',
+    	executable='combined_detections',
     )
     
     prequal_bt = Node(
