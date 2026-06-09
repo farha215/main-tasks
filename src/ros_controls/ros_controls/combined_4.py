@@ -24,6 +24,7 @@ LOWER_RED2 = np.array([170, 120, 70])
 UPPER_RED2 = np.array([180, 255, 255])
 
 MIN_CONTOUR_AREA = 500
+YOLO_CONF_THRESHOLD = 0.5
 
 # FIXED: YOLO CLASS MAPPING SYNCED WITH C++ BT_NODES
 YOLO_CLASS_MAP = {
@@ -177,10 +178,18 @@ class UnifiedDetectionNode(Node):
         for obj in current_zed_objects:
             cls_id = obj.label_id
             cls_name = YOLO_CLASS_MAP.get(cls_id, "preq_gate")
+            conf = float(obj.confidence) / 100.0
 
             if not obj.bounding_box_2d.corners:
                 self.get_logger().info(
                     f'{cls_name} not detected.',
+                    throttle_duration_sec=2.0
+                )
+                continue
+
+            if conf < YOLO_CONF_THRESHOLD:
+                self.get_logger().debug(
+                    f'Skipping {cls_name}: confidence {conf:.2f} below threshold {YOLO_CONF_THRESHOLD:.2f}.',
                     throttle_duration_sec=2.0
                 )
                 continue
@@ -191,8 +200,6 @@ class UnifiedDetectionNode(Node):
             x1, x2 = int(min(x_coords)), int(max(x_coords))
             y1, y2 = int(min(y_coords)), int(max(y_coords))
             bbox = (x1, y1, x2, y2)
-
-            conf = float(obj.confidence) / 100.0
             
             # FIXED: ZED SDK camera framework defines index [2] as forward optical depth
             pos = (float(obj.position[0]), float(obj.position[1]), float(obj.position[2]))
