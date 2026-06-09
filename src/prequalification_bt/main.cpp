@@ -16,6 +16,7 @@
 #include <string>
 #include <thread>
 #include <fstream>
+//--Helo i ama Animesh--//
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
@@ -66,7 +67,7 @@ int main(int argc, char** argv) {
         });
 
     // Actuator publishers
-    ctx->pico_pub = node->create_publisher<custom_interfaces::msg::ControlCommand>("/control_cmd", 10);
+    ctx->pico_pub = node->create_publisher<auv_msgs::msg::ControlCommand>("/control_cmd", 10);
 
     // IMU subscription (orientation / yaw)
     ctx->imu_sub =
@@ -79,6 +80,8 @@ int main(int argc, char** argv) {
                  }); 
 
     // Altimeter subscription (altitude above pool floor)
+    
+    /*
     ctx->alt_sub =
         node->create_subscription<std_msgs::msg::Float32>(
             "/pressure", 10,
@@ -90,6 +93,8 @@ int main(int argc, char** argv) {
                 ctx->latest_altimeter = msg->data;
                 ctx->altimeter_received = true;
             });
+    */
+    
 
     // 3D Detections subscription (YOLO + depth fusion)
     ctx->det_sub =
