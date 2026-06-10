@@ -167,7 +167,6 @@ BT::NodeStatus ApproachObject::onStart() {
 
     smoothed_norm_x_ = 0.0f;
     locked_          = false;
-    locked_norm_x_   = 0.0f;
 
     RCLCPP_INFO(ctx->node->get_logger(), "[ApproachObject] Approaching %s to %.1f m", target_object_.c_str(), threshold_);
     return BT::NodeStatus::RUNNING;
@@ -194,19 +193,18 @@ BT::NodeStatus ApproachObject::onRunning() {
             return BT::NodeStatus::RUNNING;
         }
 
-        locked_      = true;
-        locked_norm_x_ = smoothed_norm_x_;
+        locked_ = true;
         RCLCPP_INFO(ctx->node->get_logger(),
                     "[ApproachObject] Locked onto %s (conf %.2f). Surging.", target_object_.c_str(), score);
     }
 
-    // Once locked: check depth only when seen, keep surging regardless
+    // Once locked: surge straight, no yaw correction
     if (seen && oz < threshold_) {
         ctx->stopMotion();
         return BT::NodeStatus::SUCCESS;
     }
 
-    ctx->publishToPico(-locked_norm_x_, ctx->base_surge_speed, (float)ctx->target_depth, 0);
+    ctx->publishToPico(0.0f, ctx->base_surge_speed, (float)ctx->target_depth, 0);
     return BT::NodeStatus::RUNNING;
 }
 

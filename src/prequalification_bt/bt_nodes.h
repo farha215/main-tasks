@@ -242,7 +242,6 @@ private:
   double threshold_ = 1.5;
   float smoothed_norm_x_ = 0.0f;
   bool locked_ = false;
-  float locked_norm_x_ = 0.0f;
 };
 
 class OrbitPole : public BT::StatefulActionNode {
