@@ -15,7 +15,6 @@
 #include <memory>
 #include <string>
 #include <thread>
-#include <fstream>
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
@@ -125,14 +124,6 @@ int main(int argc, char** argv) {
     // --- Behavior Tree Initialization ---------------------------------------
     BT::BehaviorTreeFactory factory;
     registerAllNodes(factory);
-
-    // Dump TreeNodesModel XML for Groot2 visualization
-    {
-        std::string xml_models = BT::writeTreeNodesModelXML(factory);
-        std::ofstream model_file("bt_nodes_model.xml");
-        model_file << xml_models;
-        RCLCPP_INFO(node->get_logger(), "[main] Written bt_nodes_model.xml for Groot2");
-    }
 
     // Locate the XML mission file
     std::string xml_path;

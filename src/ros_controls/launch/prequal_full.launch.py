@@ -21,6 +21,9 @@ def generate_launch_description():
     yolo_config=os.path.join(
         get_package_share_directory('ros_controls'), 'config', 'custom_yolo.yaml'
     )
+    mission_params = os.path.join(
+        get_package_share_directory('prequalification_bt'), 'config', 'mission_params.yaml'
+    )
 
     cam_front = GroupAction(actions=[
         #PushRosNamespace('zed_front'),
@@ -46,6 +49,7 @@ def generate_launch_description():
     prequal_bt = Node(
     	package='prequalification_bt',
     	executable='prequalification',
+    	parameters=[mission_params],
     )
     
     

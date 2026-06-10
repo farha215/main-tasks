@@ -103,7 +103,7 @@ struct RobotContext {
    * @brief Gets the 3D position of a detected object.
    */
   bool getObjectPosition(const std::string &object, double &ox, double &oy,
-                         double &oz) {
+                         double &oz, double *score_out = nullptr) {
     std::lock_guard<std::mutex> g(mtx);
     if (!latest_detections)
       return false;
@@ -122,6 +122,7 @@ struct RobotContext {
         ox = det.bbox.center.position.x;
         oy = det.bbox.center.position.y;
         oz = det.bbox.center.position.z;
+        if (score_out) *score_out = score;
         return true;
       }
     }
@@ -240,6 +241,8 @@ private:
   std::string target_object_;
   double threshold_ = 1.5;
   float smoothed_norm_x_ = 0.0f;
+  bool locked_ = false;
+  float locked_norm_x_ = 0.0f;
 };
 
 class OrbitPole : public BT::StatefulActionNode {

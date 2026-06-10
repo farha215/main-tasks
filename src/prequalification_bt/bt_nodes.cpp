@@ -166,6 +166,8 @@ BT::NodeStatus ApproachObject::onStart() {
     rclcpp::spin_some(ctx->node);
 
     smoothed_norm_x_ = 0.0f;
+    locked_          = false;
+    locked_norm_x_   = 0.0f;
 
     RCLCPP_INFO(ctx->node->get_logger(), "[ApproachObject] Approaching %s to %.1f m", target_object_.c_str(), threshold_);
     return BT::NodeStatus::RUNNING;
@@ -175,22 +177,36 @@ BT::NodeStatus ApproachObject::onRunning() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
-    double ox, oy, oz;
-    bool seen = ctx->getObjectPosition(target_object_, ox, oy, oz);
+    double ox, oy, oz, score = 0.0;
+    bool seen = ctx->getObjectPosition(target_object_, ox, oy, oz, &score);
 
-    if (!seen) {
-        ctx->publishToPico(0.0f, 0.0f, (float)ctx->target_depth, 0);
-        return BT::NodeStatus::RUNNING;
+    if (!locked_) {
+        if (!seen) {
+            ctx->publishToPico(0.0f, 0.0f, (float)ctx->target_depth, 0);
+            return BT::NodeStatus::RUNNING;
+        }
+
+        double raw_norm_x = ox / std::max(oz, 0.5);
+        smoothed_norm_x_  = 0.7f * smoothed_norm_x_ + 0.3f * (float)raw_norm_x;
+
+        if (score < 0.85) {
+            ctx->publishToPico(0.0f, 0.0f, (float)ctx->target_depth, 0);
+            return BT::NodeStatus::RUNNING;
+        }
+
+        locked_      = true;
+        locked_norm_x_ = smoothed_norm_x_;
+        RCLCPP_INFO(ctx->node->get_logger(),
+                    "[ApproachObject] Locked onto %s (conf %.2f). Surging.", target_object_.c_str(), score);
     }
 
-    if (oz < threshold_) {
+    // Once locked: check depth only when seen, keep surging regardless
+    if (seen && oz < threshold_) {
         ctx->stopMotion();
         return BT::NodeStatus::SUCCESS;
     }
 
-    double raw_norm_x = ox / std::max(oz, 0.5);
-    smoothed_norm_x_  = 0.7f * smoothed_norm_x_ + 0.3f * (float)raw_norm_x;
-    ctx->publishToPico(-(float)smoothed_norm_x_, ctx->base_surge_speed, (float)ctx->target_depth, 0);
+    ctx->publishToPico(-locked_norm_x_, ctx->base_surge_speed, (float)ctx->target_depth, 0);
     return BT::NodeStatus::RUNNING;
 }
 
