@@ -56,6 +56,8 @@ struct RobotContext {
   float base_yaw_speed = 0.1f;
   float gate_conf_thresh = 0.6f;
   float pole_conf_thresh = 0.3f;
+  float gate_lock_thresh = 0.70f;  // min YOLO score to commit to gate approach
+  float pole_lock_thresh = 0.45f;  // min score to commit to pole approach (HSV always = 0.5)
   float depth_tolerance = 0.15f;
   float gate_align_deadband = 0.04f;
   float pole_align_deadband = 0.06f;
@@ -157,12 +159,21 @@ inline double normalizeAngle(double a) {
 
 // --- Condition Nodes -------------------------------------------------------
 
-class AllSystemsOK : public BT::ConditionNode {
+class AllSystemsOK : public BT::StatefulActionNode {
 public:
   AllSystemsOK(const std::string &name, const BT::NodeConfig &config)
-      : BT::ConditionNode(name, config) {}
-  static BT::PortsList providedPorts() { return {}; }
-  BT::NodeStatus tick() override;
+      : BT::StatefulActionNode(name, config) {}
+  static BT::PortsList providedPorts() {
+    return {BT::InputPort<double>("timeout_s", 20.0,
+                                 "Seconds to wait before giving up")};
+  }
+  BT::NodeStatus onStart() override;
+  BT::NodeStatus onRunning() override;
+  void onHalted() override;
+
+private:
+  std::chrono::steady_clock::time_point start_time_;
+  double timeout_s_ = 20.0;
 };
 
 class IsObjectSeen : public BT::ConditionNode {
@@ -206,6 +217,7 @@ public:
 private:
   std::string target_object_;
   double prev_yaw_ = 0.0, accumulated_yaw_ = 0.0;
+  int confirm_frames_ = 0;
 };
 
 class DriveThruGate : public BT::StatefulActionNode {
@@ -218,11 +230,8 @@ public:
   void onHalted() override;
 
 private:
-  enum class Phase { ALIGN, DRIVE };
-  Phase phase_ = Phase::ALIGN;
   double locked_heading_ = 0.0;
   int gate_lost_frames_ = 0;
-  float smoothed_norm_x_ = 0.0f;
 };
 
 class ApproachObject : public BT::StatefulActionNode {

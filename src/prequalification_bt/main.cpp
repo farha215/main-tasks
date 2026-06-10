@@ -30,6 +30,8 @@ int main(int argc, char** argv) {
     node->declare_parameter("base_yaw_speed", 0.1);
     node->declare_parameter("gate_conf_thresh", 0.6);
     node->declare_parameter("pole_conf_thresh", 0.3);
+    node->declare_parameter("gate_lock_thresh", 0.70);
+    node->declare_parameter("pole_lock_thresh", 0.45);
     node->declare_parameter("depth_tolerance", 0.15);
     node->declare_parameter("gate_align_deadband", 0.04);
     node->declare_parameter("pole_align_deadband", 0.06);
@@ -41,6 +43,8 @@ int main(int argc, char** argv) {
         ctx->base_yaw_speed   = node->get_parameter("base_yaw_speed").as_double();
         ctx->gate_conf_thresh = node->get_parameter("gate_conf_thresh").as_double();
         ctx->pole_conf_thresh = node->get_parameter("pole_conf_thresh").as_double();
+        ctx->gate_lock_thresh = node->get_parameter("gate_lock_thresh").as_double();
+        ctx->pole_lock_thresh = node->get_parameter("pole_lock_thresh").as_double();
         ctx->depth_tolerance  = node->get_parameter("depth_tolerance").as_double();
         ctx->gate_align_deadband = node->get_parameter("gate_align_deadband").as_double();
         ctx->pole_align_deadband = node->get_parameter("pole_align_deadband").as_double();
