@@ -95,8 +95,9 @@ class UnifiedDetectionNode(Node):
     def get_hsv_bboxes(self, frame_bgr):
 
         # ── TUNED HSV SETTINGS ────────────────────────────────────────
+        # H_LO > H_HI triggers dual-range wrap-around mode (covers 160-180 AND 0-10)
         H_LO        = 160
-        H_HI        = 180
+        H_HI        = 10
         S_LO        = 9
         S_HI        = 255
         V_LO        = 49
@@ -202,6 +203,7 @@ class UnifiedDetectionNode(Node):
 
     def synced_callback(self, img_msg, depth_msg):
         frame    = self.cv2_bridge.imgmsg_to_cv2(img_msg,   desired_encoding='bgr8').copy()
+        clean_frame = frame.copy()  # HSV runs on this — before YOLO draws on frame
         depth_np = self.cv2_bridge.imgmsg_to_cv2(depth_msg, desired_encoding='passthrough')
 
         det_array  = DetectionArray()
@@ -255,10 +257,10 @@ class UnifiedDetectionNode(Node):
             tracking_id += 1
 
         # ── HSV POLE DETECTIONS ───────────────────────────────────────
-        hsv_bboxes = self.get_hsv_bboxes(frame)
-        for bbox in hsv_bboxes:
+        hsv_bboxes = self.get_hsv_bboxes(clean_frame)
+        for hsv_idx, bbox in enumerate(hsv_bboxes):
             x1, y1, x2, y2 = bbox
-            obj_id = f'hsv_pole_{tracking_id}'
+            obj_id = f'hsv_pole_{hsv_idx}'
             current_ids.add(obj_id)
 
             raw_depth = self.get_depth_from_depthmap(depth_np, bbox)
