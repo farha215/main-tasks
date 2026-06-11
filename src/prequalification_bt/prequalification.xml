@@ -12,7 +12,8 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
     <BehaviorTree ID="PreQualification_Task">
         <Sequence name="main_mission">
             <!-- 0. SYSTEMS CHECK -->
-            <AllSystemsOK name="check_systems"/>
+            <!-- NOTE: Change timeout_s here to give sensors more time to come online -->
+            <AllSystemsOK name="check_systems" timeout_s="20.0"/>
 
             <!-- 1. INITIALIZE -->
             <!-- NOTE: Change target_depth here (meters, positive-down) for the initial dive -->
@@ -53,7 +54,9 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
     </BehaviorTree>
 
     <TreeNodesModel>
-        <Condition ID="AllSystemsOK"/>
+        <Action ID="AllSystemsOK">
+            <input_port name="timeout_s" type="double" default="20.0">Seconds to wait before aborting</input_port>
+        </Action>
         <Condition ID="IsObjectSeen">
             <input_port name="object" type="std::string">GATE or POLE</input_port>
         </Condition>
