@@ -22,10 +22,10 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             <!-- 2. GATE MISSION -->
             
             <!-- NOTE: Change 'threshold' here to set how close to get to the gate before passing -->
-            <ApproachObject object="GATE" threshold="1.0"/>
+            <!-- <ApproachObject object="GATE" threshold="1.0"/> -->
             
             <!-- NOTE: Surge through and clear the gate (Uses frame-counting in C++) -->
-            <DriveThruGate/>
+            <!-- <DriveThruGate/> -->
 
             <!-- 3. POLE MISSION -->
             <Fallback name="find_pole">

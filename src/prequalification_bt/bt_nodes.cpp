@@ -16,7 +16,7 @@ static std::shared_ptr<RobotContext> getCtx(const BT::NodeConfig& cfg) {
     }
     return ctx;
 }
-double turn_start_ = 0.0
+double turn_start_ = 0.0;
 // --- AllSystemsOK -----------------------------------------------------------
 
 BT::NodeStatus AllSystemsOK::onStart() {
@@ -439,5 +439,6 @@ BT::NodeStatus OrbitPole::onRunning() {
 
         return BT::NodeStatus::RUNNING;
     }
+}
 
     void OrbitPole::onHalted() { getCtx(config())->stopMotion(); }
