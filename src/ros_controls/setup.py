@@ -41,6 +41,7 @@ setup(
             'dataset_collector_down =ros_controls.dataset_collector_down:main',
             'hsv_tuned_detections=ros_controls.hsv_tuned_detections',
             'combined_detections_v2=ros_controls.combined_detections_v2',
+            'imu_yaw_error=ros_controls.imu_yaw_error:main',
         ],
     },
 )

@@ -2,7 +2,7 @@
  * @file bt_nodes.cpp
  * @brief Implementation of Behavior Tree nodes for the RoboSub pre-qualification mission.
  * @license Apache-2.0
- */
+**/
 
 #include "bt_nodes.h"
 
