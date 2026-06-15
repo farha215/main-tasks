@@ -72,7 +72,10 @@ void control::stbUpdate() {
     float tau_pitch = -tau_scale * (K_tau[1][0] * omega_err_x + K_tau[1][1] * omega_err_y);
 
     //z control
-    float z_error = state.ref_z - state.z;
+    if (state.ref_z<=0.01)
+        float z_error=0;
+    else 
+        float z_error = state.ref_z - state.z;
     float Fz_pid = computePID(pid_z, z_error, STB_LOOP_DT);
     float Fz = Fz_eq + Fz_pid;
     // float Fz = Fz_eq;

@@ -51,6 +51,9 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
 
             <!-- NOTE: Clear home gate -->
             <DriveThruGate/>
+
+            <!-- 5. SURFACE -->
+            <DiveToDepth target_depth="0.0"/>
         </Sequence>
     </BehaviorTree>
 
