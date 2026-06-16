@@ -116,7 +116,7 @@ int main(void) {
             // throttle.VR = 48;
             // throttle.VL = 48;
             // throttle.HR = 48;
-            // throttle.HL = 48;
+            // throttle.HL = 300;
 
             esc::thrust();
 

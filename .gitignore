@@ -17,3 +17,9 @@ misc_camera_scripts/stereo_dataset_20260611_172557/
 
 # Wildcard: Catch ANY future date-stamped stereo datasets automatically
 misc_camera_scripts/stereo_dataset_*/
+
+misc_camera_scripts/
+
+# But keep these two specific scripts
+!misc_camera_scripts/collect_images.py
+!misc_camera_scripts/record_svo.py

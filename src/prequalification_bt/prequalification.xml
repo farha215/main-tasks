@@ -17,7 +17,7 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
 
             <!-- 1. INITIALIZE -->
             <!-- NOTE: Change target_depth here (meters, positive-down) for the initial dive -->
-            <DiveToDepth target_depth="0.20"/>
+            <!-- <DiveToDepth target_depth="0.20"/> -->
 
             <!-- 2. GATE MISSION -->
             
@@ -53,7 +53,7 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             <DriveThruGate/>
 
             <!-- 5. SURFACE -->
-            <DiveToDepth target_depth="0.0"/>
+            <!-- <DiveToDepth target_depth="0.0"/> -->
         </Sequence>
     </BehaviorTree>
 

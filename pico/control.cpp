@@ -77,6 +77,7 @@ void control::stbUpdate() {
     float Fz_pid = computePID(pid_z, z_error, STB_LOOP_DT);
     float Fz = Fz_eq + Fz_pid;
     // float Fz = Fz_eq;
+    Fz=0;
 
     //x to f mixing
     // float VB = XtoF[0][0] * tau_roll + XtoF[0][1] * tau_pitch + XtoF[0][2] * Fz;
