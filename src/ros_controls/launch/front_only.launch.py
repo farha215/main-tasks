@@ -58,7 +58,7 @@ def generate_launch_description():
 
     combined_detections_hsv_pose = Node(
     	package='ros_controls',
-    	executable='combined_detections_hsv_pose',
+    	executable='combined_detections',
     )
     
     

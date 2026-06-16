@@ -230,9 +230,9 @@ class UnifiedDetectionNode(Node):
             cls_name = YOLO_CLASS_MAP.get(cls_id, "preq_gate")
             conf     = float(obj.confidence) / 100.0
 
-            pos      = (float(obj.position[1]),
-                        float(obj.position[2]),
-                        float(obj.position[0]))
+            pos      = (float(obj.position[0]),
+                        float(obj.position[1]),
+                        float(obj.position[2]))
             distance = float(obj.position[0])
 
             obj_id = f'yolo_{cls_name}_{tracking_id}'
