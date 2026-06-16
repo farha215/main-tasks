@@ -23,8 +23,8 @@
 
 //PIO of ESC
 #define PIO_VB 5
-#define PIO_VR 6
-#define PIO_VL 7
+#define PIO_VR 7
+#define PIO_VL 6
 #define PIO_HR 3
 #define PIO_HL 4
 

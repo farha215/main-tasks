@@ -22,7 +22,7 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             <!-- 2. GATE MISSION -->
             
             <!-- NOTE: Change 'threshold' here to set how close to get to the gate before passing -->
-            <ApproachObject object="GATE" threshold="1.0"/>
+            <ApproachObject object="GATE" threshold="2.0"/>
             
             <!-- NOTE: Surge through and clear the gate (Uses frame-counting in C++) -->
             <DriveThruGate/>
@@ -34,7 +34,7 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             </Fallback>
             
             <!-- NOTE: Change 'threshold' here to set the radius of the orbit approach -->
-            <ApproachObject object="POLE" threshold="1.0"/>
+            <ApproachObject object="POLE" threshold="2.0"/>
 
             <!-- NOTE: 4-leg square orbit. Pauses 3s at threshold, then X, 2X, 2X, 2X surges.
                  Surge duration X is orbit_surge_duration in mission_params.yaml. -->
@@ -47,7 +47,7 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             </Fallback>
 
             <!-- NOTE: Approach home gate to threshold -->
-            <ApproachObject object="GATE" threshold="1.0"/>
+            <ApproachObject object="GATE" threshold="2.0"/>
 
             <!-- NOTE: Clear home gate -->
             <DriveThruGate/>

@@ -7,8 +7,8 @@ cd "$SCRIPT_DIR" || exit 1
 echo "first pico flash"
 ./program_pico.sh
 
-echo "waiting 5 seconds"
-sleep 5
+echo "waiting 10 seconds"
+sleep 10
 
 echo "launching first UART bridge terminal"
 gnome-terminal -- bash -c "
@@ -18,14 +18,14 @@ ros2 run pico_UART uart_ros_bridge
 exec bash
 "
 
-echo "waiting 5 seconds"
-sleep 5
+echo "waiting 10 seconds"
+sleep 10
 
 echo "second pico flash"
 ./program_pico.sh
 
-echo "waiting 5 seconds"
-sleep 5
+echo "waiting 10 seconds"
+sleep 10
 
 echo "launching second UART bridge terminal"
 gnome-terminal -- bash -c "
@@ -34,8 +34,8 @@ source install/setup.bash
 ros2 run pico_UART uart_ros_bridge
 exec bash
 "
-echo "waiting 5 seconds"
-sleep 5
+echo "waiting 10 seconds"
+sleep 10
 
 echo "launching prequal"
 gnome-terminal -- bash -c "
