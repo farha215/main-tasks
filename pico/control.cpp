@@ -29,7 +29,7 @@ float K_tau[2][2] = {
 // constants
 const float STB_LOOP_DT = STB_LOOP_MS / 1000.0f;
 
-const float Fz_eq = 3;
+const float Fz_eq = 10;
 const float F_MIN = -23.3f;
 const float F_MAX = 29.8f;
 const float tau_scale = 1.0f;
@@ -77,7 +77,7 @@ void control::stbUpdate() {
     float Fz_pid = computePID(pid_z, z_error, STB_LOOP_DT);
     float Fz = Fz_eq + Fz_pid;
     // float Fz = Fz_eq;
-    Fz=0;
+    // Fz=0;
 
     //x to f mixing
     // float VB = XtoF[0][0] * tau_roll + XtoF[0][1] * tau_pitch + XtoF[0][2] * Fz;

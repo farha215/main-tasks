@@ -211,6 +211,9 @@ BT::NodeStatus ApproachObject::onStart() {
 
     smoothed_norm_x_ = 0.0f;
     locked_ = false;
+    target_yaw_ = ctx->getCurrentYaw();
+    RCLCPP_INFO(ctx->node->get_logger(),"target lockedW");
+
 
     RCLCPP_INFO(ctx->node->get_logger(), "[ApproachObject] Approaching %s to %.1f m", target_object_.c_str(), threshold_);
     return BT::NodeStatus::RUNNING;
@@ -268,11 +271,12 @@ BT::NodeStatus ApproachObject::onRunning() {
     //     // Object temporarily lost — hold last heading, keep closing distance.
     //     ctx->publishToPico(0.0f, ctx->base_surge_speed, (float)ctx->target_depth, 0);
     // }
-
     while (true) {
+        rclcpp::spin_some(ctx->node);
         double current_yaw = ctx->getCurrentYaw();
         float yaw_cmd = (float)normalizeAngle(target_yaw_ - current_yaw);
         ctx->publishToPico(yaw_cmd, 1.0f, (float)ctx->target_depth, 0);
+        
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
