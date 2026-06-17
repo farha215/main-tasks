@@ -261,7 +261,7 @@ BT::NodeStatus ApproachObject::onRunning() {
 
         float deadband = (target_object_ == "GATE") ? ctx->gate_align_deadband
             : ctx->pole_align_deadband;
-        float yaw_cmd = (std::abs(smoothed_norm_x_) > deadband) ? -smoothed_norm_x_ : 0.0f;
+        float yaw_cmd = (std::abs(smoothed_norm_x_) > deadband) ? smoothed_norm_x_ : 0.0f;
         ctx->publishToPico(yaw_cmd, ctx->base_surge_speed, (float)ctx->target_depth, 0);
     }
     else {
