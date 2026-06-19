@@ -1,0 +1,18 @@
+<root BTCPP_format="4">
+
+    <!-- ================= StartGate Subtree Definition ================= -->
+    <BehaviorTree ID="StartGate">
+        <Sequence name="start_gate_sequence">
+        <!--all systems check -->
+        <AllSystemsOK name="check_systems" timeout_s="20.0"/>
+        <!--dive to depth -->
+        <DiveToDepth target_depth="1.5"/>
+        <Fallback name="find_gate">
+                <IsObjectSeen object="GATE"/>
+                <Do360Turn success_when_seen="GATE"/>
+        </Fallback>
+        <DriveThruGate/>
+        </Sequence>
+    </BehaviorTree>
+
+</root>

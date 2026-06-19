@@ -18,8 +18,19 @@ from auv_msgs.msg import Detection, DetectionArray
 
 # ── YOLO CLASS MAPPING ────────────────────────────────────────────────
 YOLO_CLASS_MAP = {
-    0: 'preq_gate',
-    1: 'preq_gate'
+    0: 'left_gate_pole',
+    1: 'right_gate_pole',
+    2: 'shark',
+    3: 'sawfish',
+    4: 'drop_box',
+    5: 'red_buoy',
+    6: 'red_pole',
+    7: 'white_pole',
+    8: 'path_marker',
+    9: 'octagon',
+    10: 'table',
+    11: 'ladle',
+    12: 'bottle'
 }
 
 # ── HSV HELPERS (module-level, no self needed) ────────────────────────

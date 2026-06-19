@@ -1,0 +1,11 @@
+<root BTCPP_format="4" main_tree_to_execute="Main_Task">
+
+    <!-- ================= Main Execution Tree ================= -->
+    <BehaviorTree ID="Main_Task">
+        <Sequence>
+            <!-- Call the StartGate subtree (loaded from start_gate.xml) -->
+            <SubTree ID="StartGate" _shared_blackboard="true" />
+        </Sequence>
+    </BehaviorTree>
+
+</root>

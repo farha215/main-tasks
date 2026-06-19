@@ -1,0 +1,6 @@
+main_task_node:
+  ros__parameters:
+    base_surge_speed: 0.8
+    base_yaw_speed: 0.1
+    gate_conf_thresh: 0.25
+    depth_tolerance: 0.15

@@ -248,7 +248,6 @@ public:
 private:
   std::string target_object_;
   double threshold_ = 1.5;
-  float smoothed_norm_x_ = 0.0f;
   bool locked_ = false;
 };
 

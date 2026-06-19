@@ -208,7 +208,6 @@ BT::NodeStatus ApproachObject::onStart() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
-    smoothed_norm_x_ = 0.0f;
     locked_          = false;
 
     RCLCPP_INFO(ctx->node->get_logger(), "[ApproachObject] Approaching %s to %.1f m", target_object_.c_str(), threshold_);
@@ -228,9 +227,6 @@ BT::NodeStatus ApproachObject::onRunning() {
             return BT::NodeStatus::RUNNING;
         }
 
-        double raw_norm_x = ox / std::max(oz, 0.5);
-        smoothed_norm_x_  = 0.7f * smoothed_norm_x_ + 0.3f * (float)raw_norm_x;
-
         float lock_thresh = (target_object_ == "GATE") ? ctx->gate_lock_thresh
                                                          : ctx->pole_lock_thresh;
         if (score < lock_thresh) {
@@ -246,7 +242,6 @@ BT::NodeStatus ApproachObject::onRunning() {
     // Locked phase: surge toward object while keeping it centered laterally.
     if (seen) {
         double raw_norm_x = ox / std::max(oz, 0.5);
-        smoothed_norm_x_  = 0.7f * smoothed_norm_x_ + 0.3f * (float)raw_norm_x;
 
         if (oz < threshold_) {
             ctx->stopMotion();
@@ -255,7 +250,7 @@ BT::NodeStatus ApproachObject::onRunning() {
 
         float deadband = (target_object_ == "GATE") ? ctx->gate_align_deadband
                                                      : ctx->pole_align_deadband;
-        float yaw_cmd  = (std::abs(smoothed_norm_x_) > deadband) ? -smoothed_norm_x_ : 0.0f;
+        float yaw_cmd  = (std::abs(raw_norm_x) > deadband) ? -(float)raw_norm_x : 0.0f;
         ctx->publishToPico(yaw_cmd, ctx->base_surge_speed, (float)ctx->target_depth, 0);
     } else {
         // Object temporarily lost — hold last heading, keep closing distance.
