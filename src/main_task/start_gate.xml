@@ -3,8 +3,6 @@
     <!-- ================= StartGate Subtree Definition ================= -->
     <BehaviorTree ID="StartGate">
         <Sequence name="start_gate_sequence">
-        <!--all systems check -->
-        <AllSystemsOK name="check_systems" timeout_s="20.0"/>
         <!--dive to depth -->
         <DiveToDepth target_depth="1.5"/>
         <Fallback name="find_gate">
@@ -14,5 +12,18 @@
         <DriveThruGate/>
         </Sequence>
     </BehaviorTree>
-
+    <TreeNodesModel>
+        <Action ID="AllSystemsOK">
+            <input_port name="timeout_s" type="double" default="20.0">Seconds to wait before aborting system check</input_port>
+        </Action>
+        <Condition ID="IsObjectSeen">
+            <input_port name="object" type="std::string">GATE or POLE</input_port>
+        </Condition>
+        <Action ID="DiveToDepth">
+            <input_port name="target_depth" type="double">Depth to dive to</input_port>
+        </Action>
+        <Action ID="Do360Turn">
+            <input_port name="success_when_seen" type="std::string">Stop when object is seen</input_port>
+        </Action>
+    </TreeNodesModel>
 </root>

@@ -53,7 +53,7 @@ BT::NodeStatus AllSystemsOK::onRunning() {
 
     if (elapsed >= timeout_s_) {
         RCLCPP_ERROR(ctx->node->get_logger(),
-                     "[AllSystemsOK] Timeout after %.0fs — aborting mission.", timeout_s_);
+                     "[AllSystemsOK] Timeout after %.0fs systems check failed, aborting mission.", timeout_s_);
         return BT::NodeStatus::FAILURE;
     }
 
