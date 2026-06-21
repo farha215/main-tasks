@@ -22,18 +22,46 @@
         object_detection:
             od_enabled: true
             detection_model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
-            custom_onnx_file: '/home/cupcake/Desktop/deuterium/src/ros_controls/models/new_model_prequal.onnx'
+            custom_onnx_file: '/home/farha/Desktop/yaw_testing/startgate_fixed.onnx'
             confidence_threshold: 50.0
             max_range: 15.0
 
             custom_onnx_input_size: 1280 
             custom_obj_det_config_file: '/home/cupcake/Desktop/deuterium/src/ros_controls/config/custom_yolo.yaml'
       
-            custom_class_count: 1 
+            custom_class_count: 5 
 
             class_000:
-                label: 'gate'
+                label: 'search_and_rescue'
                 model_class_id: 0
+                enabled: true
+                confidence_threshold: 50.0
+                is_grounded: false
+                is_static: true
+            class_001:
+                label: 'red_pole'
+                model_class_id: 1
+                enabled: true
+                confidence_threshold: 50.0
+                is_grounded: false
+                is_static: true
+            class_002:
+                label: 'repair_and_survey'
+                model_class_id: 2
+                enabled: true
+                confidence_threshold: 50.0
+                is_grounded: false
+                is_static: true
+            class_003:
+                label: 'white_pole'
+                model_class_id: 3
+                enabled: true
+                confidence_threshold: 50.0
+                is_grounded: false
+                is_static: true
+            class_004:
+                label: 'main_gate'
+                model_class_id: 4
                 enabled: true
                 confidence_threshold: 50.0
                 is_grounded: false
