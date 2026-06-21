@@ -2,7 +2,7 @@
   ros__parameters:
     object_detection:
       detection_model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
-      custom_onnx_file: '/home/farha/Desktop/yaw_testing/startgate_fixed.onnx'
+      custom_onnx_file: '/home/farha/Desktop/yaw_testing/deuterium/src/ros_controls/models/startgate_fixed.onnx'
       custom_onnx_input_size: 1280 
       
       custom_class_count: 5 

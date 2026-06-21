@@ -8,7 +8,7 @@
             <!-- Call the StartGate subtree (loaded from start_gate.xml) -->
             <SubTree ID="StartGate" _shared_blackboard="true" />
             <!-- Call the AlignObject subtree (loaded from alignobject.xml) -->
-            <SubTree ID="AlignObject" _shared_blackboard="true" />
+            <!-- <SubTree ID="AlignObject" _shared_blackboard="true" /> -->
         </Sequence>
     </BehaviorTree>
 

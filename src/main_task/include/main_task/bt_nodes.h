@@ -225,16 +225,67 @@ private:
     int confirm_frames_ = 0;
 };
 
-class DriveThruGate : public BT::StatefulActionNode {
+class CenterObject : public BT::StatefulActionNode {
 public:
-    DriveThruGate(const std::string &name, const BT::NodeConfig &config)
+    CenterObject(const std::string &name, const BT::NodeConfig &config)
             : BT::StatefulActionNode(name, config) {}
-    static BT::PortsList providedPorts() { return {}; }
+    static BT::PortsList providedPorts() {
+        return {BT::InputPort<std::string>("object")};
+    }
     BT::NodeStatus onStart() override;
     BT::NodeStatus onRunning() override;
     void onHalted() override;
 
 private:
+    std::string target_object_;
+    int align_confirm_frames_ = 0;
+    double filtered_yaw_err_ = 0.0;
+};
+
+class FindAnyObject : public BT::ConditionNode {
+public:
+    FindAnyObject(const std::string &name, const BT::NodeConfig &config)
+            : BT::ConditionNode(name, config) {}
+    static BT::PortsList providedPorts() {
+        return {BT::InputPort<std::string>("objects"),
+                BT::OutputPort<std::string>("found_object")};
+    }
+    BT::NodeStatus tick() override;
+};
+
+class Do360TurnAny : public BT::StatefulActionNode {
+public:
+    Do360TurnAny(const std::string &name, const BT::NodeConfig &config)
+            : BT::StatefulActionNode(name, config) {}
+    static BT::PortsList providedPorts() {
+        return {BT::InputPort<std::string>("objects"),
+                BT::OutputPort<std::string>("found_object")};
+    }
+    BT::NodeStatus onStart() override;
+    BT::NodeStatus onRunning() override;
+    void onHalted() override;
+
+private:
+    std::vector<std::string> targets_;
+    double prev_yaw_ = 0.0;
+    double accumulated_yaw_ = 0.0;
+    int confirm_frames_ = 0;
+    std::string found_target_;
+};
+
+class DriveThruGate : public BT::StatefulActionNode {
+public:
+    DriveThruGate(const std::string &name, const BT::NodeConfig &config)
+            : BT::StatefulActionNode(name, config) {}
+    static BT::PortsList providedPorts() { 
+        return {BT::InputPort<std::string>("object")}; 
+    }
+    BT::NodeStatus onStart() override;
+    BT::NodeStatus onRunning() override;
+    void onHalted() override;
+
+private:
+    std::string target_object_;
     enum class Phase { ALIGN_1, APPROACH, ALIGN_2, SURGE };
     Phase phase_ = Phase::ALIGN_1;
     int gate_lost_frames_ = 0;
@@ -263,6 +314,9 @@ inline void registerAllNodes(BT::BehaviorTreeFactory &factory) {
     factory.registerNodeType<DiveToDepth>("DiveToDepth");
     factory.registerNodeType<IsObjectSeen>("IsObjectSeen");
     factory.registerNodeType<Do360Turn>("Do360Turn");
+    factory.registerNodeType<CenterObject>("CenterObject");
+    factory.registerNodeType<FindAnyObject>("FindAnyObject");
+    factory.registerNodeType<Do360TurnAny>("Do360TurnAny");
     factory.registerNodeType<DriveThruGate>("DriveThruGate");
     factory.registerNodeType<AlignAndApproachObject>("AlignAndApproachObject");
 }

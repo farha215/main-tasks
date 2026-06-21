@@ -175,6 +175,10 @@ void Do360Turn::onHalted() {
 // --- DriveThruGate (Align then Surge) ---------------------------------------
 
 BT::NodeStatus DriveThruGate::onStart() {
+    auto obj = getInput<std::string>("object");
+    if (!obj) throw BT::RuntimeError("DriveThruGate: missing [object]");
+    target_object_ = obj.value();
+
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
@@ -193,11 +197,8 @@ BT::NodeStatus DriveThruGate::onRunning() {
     rclcpp::spin_some(ctx->node);
 
     double ox, oy, oz, score = 0.0;
-    // Try to locate target object ("main_gate" first, fallback to "GATE")
-    bool seen = ctx->getObjectPosition("main_gate", ox, oy, oz, &score);
-    if (!seen) {
-        seen = ctx->getObjectPosition("GATE", ox, oy, oz, &score);
-    }
+    bool seen = ctx->getObjectPosition(target_object_, ox, oy, oz, &score);
+
 
     // --- Phase 1: Initial Alignment (ALIGN_1) ---
     if (phase_ == Phase::ALIGN_1) {
@@ -404,5 +405,175 @@ BT::NodeStatus AlignAndApproachObject::onRunning() {
 }
 
 void AlignAndApproachObject::onHalted() {
+    getCtx(config())->stopMotion();
+}
+
+// --- CenterObject -----------------------------------------------------------
+
+BT::NodeStatus CenterObject::onStart() {
+    auto obj = getInput<std::string>("object");
+    if (!obj) throw BT::RuntimeError("CenterObject: missing [object]");
+    target_object_ = obj.value();
+
+    auto ctx = getCtx(config());
+    rclcpp::spin_some(ctx->node);
+
+    align_confirm_frames_ = 0;
+    filtered_yaw_err_ = 0.0;
+
+    RCLCPP_INFO(ctx->node->get_logger(), "[CenterObject] Starting to center on %s.", target_object_.c_str());
+    return BT::NodeStatus::RUNNING;
+}
+
+BT::NodeStatus CenterObject::onRunning() {
+    auto ctx = getCtx(config());
+    rclcpp::spin_some(ctx->node);
+
+    double ox, oy, oz, score = 0.0;
+    bool seen = ctx->getObjectPosition(target_object_, ox, oy, oz, &score);
+
+    if (!seen) {
+        ctx->publishToPico(0.0f, 0.0f, (float)ctx->target_depth, 0);
+        RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 1000,
+                             "[CenterObject] %s not seen, holding still.", target_object_.c_str());
+        return BT::NodeStatus::RUNNING;
+    }
+
+    double raw_norm_x = ox / std::max(oz, 0.5);
+    constexpr double ALIGN_THRESHOLD = 0.05;
+
+    if (std::abs(raw_norm_x) < ALIGN_THRESHOLD) {
+        align_confirm_frames_++;
+        if (align_confirm_frames_ >= 10) {
+            ctx->stopMotion();
+            RCLCPP_INFO(ctx->node->get_logger(), "[CenterObject] Centered on %s successfully.", target_object_.c_str());
+            return BT::NodeStatus::SUCCESS;
+        }
+    } else {
+        align_confirm_frames_ = 0;
+    }
+
+    double error = -raw_norm_x;
+    constexpr double alpha = 0.25;
+    if (filtered_yaw_err_ == 0.0) {
+        filtered_yaw_err_ = error;
+    } else {
+        filtered_yaw_err_ = alpha * error + (1.0 - alpha) * filtered_yaw_err_;
+    }
+
+    float yaw_cmd = (float)filtered_yaw_err_;
+    yaw_cmd = std::max(-ctx->base_yaw_speed, std::min(ctx->base_yaw_speed, yaw_cmd));
+
+    ctx->publishToPico(yaw_cmd, 0.0f, (float)ctx->target_depth, 0);
+    return BT::NodeStatus::RUNNING;
+}
+
+void CenterObject::onHalted() {
+    getCtx(config())->stopMotion();
+}
+
+// --- FindAnyObject ----------------------------------------------------------
+
+BT::NodeStatus FindAnyObject::tick() {
+    auto objs_str = getInput<std::string>("objects");
+    if (!objs_str) throw BT::RuntimeError("FindAnyObject: missing [objects]");
+
+    auto ctx = getCtx(config());
+    rclcpp::spin_some(ctx->node);
+
+    std::vector<std::string> targets;
+    std::stringstream ss(objs_str.value());
+    std::string item;
+    while (std::getline(ss, item, ',')) {
+        targets.push_back(item);
+    }
+
+    for (const auto& t : targets) {
+        if (ctx->isObjectSeen(t)) {
+            setOutput("found_object", t);
+            RCLCPP_INFO(ctx->node->get_logger(), "[FindAnyObject] Spotted %s!", t.c_str());
+            return BT::NodeStatus::SUCCESS;
+        }
+    }
+    return BT::NodeStatus::FAILURE;
+}
+
+// --- Do360TurnAny -----------------------------------------------------------
+
+BT::NodeStatus Do360TurnAny::onStart() {
+    auto objs_str = getInput<std::string>("objects");
+    if (!objs_str) throw BT::RuntimeError("Do360TurnAny: missing [objects]");
+
+    std::stringstream ss(objs_str.value());
+    std::string item;
+    targets_.clear();
+    while (std::getline(ss, item, ',')) {
+        targets_.push_back(item);
+    }
+
+    auto ctx = getCtx(config());
+    rclcpp::spin_some(ctx->node);
+
+    prev_yaw_ = ctx->getCurrentYaw();
+    accumulated_yaw_ = 0.0;
+    confirm_frames_ = 0;
+    found_target_ = "";
+
+    RCLCPP_INFO(ctx->node->get_logger(), "[Do360TurnAny] Spinning 360 to search for multiple targets...");
+    ctx->publishToPico(ctx->base_yaw_speed, 0.0f, (float)ctx->target_depth, 0);
+    return BT::NodeStatus::RUNNING;
+}
+
+BT::NodeStatus Do360TurnAny::onRunning() {
+    auto ctx = getCtx(config());
+    rclcpp::spin_some(ctx->node);
+
+    for (const auto& t : targets_) {
+        if (ctx->isObjectSeen(t)) {
+            if (found_target_ != t) {
+                found_target_ = t;
+                confirm_frames_ = 1;
+            } else {
+                confirm_frames_++;
+            }
+            break;
+        }
+    }
+
+    if (confirm_frames_ > 0) {
+        if (!ctx->isObjectSeen(found_target_)) {
+            confirm_frames_ = 0;
+            found_target_ = "";
+        } else {
+            if (confirm_frames_ == 1) {
+                ctx->publishToPico(ctx->base_yaw_speed * 0.3f, 0.0f, (float)ctx->target_depth, 0);
+                RCLCPP_INFO(ctx->node->get_logger(), "[Do360TurnAny] %s spotted, slowing...", found_target_.c_str());
+            }
+
+            if (confirm_frames_ >= 4) {
+                ctx->stopMotion();
+                setOutput("found_object", found_target_);
+                RCLCPP_INFO(ctx->node->get_logger(), "[Do360TurnAny] %s confirmed! Stopping spin.", found_target_.c_str());
+                return BT::NodeStatus::SUCCESS;
+            }
+            return BT::NodeStatus::RUNNING;
+        }
+    }
+
+    double current_yaw = ctx->getCurrentYaw();
+    accumulated_yaw_ += std::abs(normalizeAngle(current_yaw - prev_yaw_));
+    prev_yaw_ = current_yaw;
+
+    if (accumulated_yaw_ >= (2.0 * M_PI)) {
+        ctx->stopMotion();
+        RCLCPP_WARN(ctx->node->get_logger(), "[Do360TurnAny] Full rotation complete. Targets not found.");
+        return BT::NodeStatus::FAILURE;
+    }
+
+    ctx->publishToPico(ctx->base_yaw_speed, 0.0f, (float)ctx->target_depth, 0);
+    return BT::NodeStatus::RUNNING;
+}
+
+void Do360TurnAny::onHalted() {
     getCtx(config())->stopMotion();
 }

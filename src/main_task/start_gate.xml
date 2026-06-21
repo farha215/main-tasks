@@ -1,33 +1,63 @@
 <root BTCPP_format="4">
-
-    <!-- ================= StartGate Subtree Definition ================= -->
     <BehaviorTree ID="StartGate">
         <Sequence name="start_gate_sequence">
-        <!--all systems check -->
-        <AllSystemsOK name="check_systems" timeout_s="20.0"/>
-        <!--dive to depth -->
-        <DiveToDepth target_depth="0.9"/>
-        <Fallback name="find_gate">
-                <IsObjectSeen object="GATE"/>
-                <Do360Turn success_when_seen="GATE"/>
-        </Fallback>
-        <DriveThruGate/>
+            <AllSystemsOK name="check_systems" timeout_s="20.0"/>
+            <DiveToDepth target_depth="0.2"/>
+            
+            <Fallback name="gate_or_objects">
+                <!-- Branch 1: Find gate, center, then find objects and surge -->
+                <Sequence name="find_gate_and_objects">
+                    <Fallback name="find_gate">
+                        <IsObjectSeen object="main_gate"/>
+                        <Do360Turn success_when_seen="main_gate"/>
+                    </Fallback>
+                    <CenterObject object="main_gate"/>
+                    
+                    <Fallback name="find_objects">
+                        <FindAnyObject objects="search_and_rescue,repair_and_survey" found_object="{target_obj}"/>
+                        <Do360TurnAny objects="search_and_rescue,repair_and_survey" found_object="{target_obj}"/>
+                    </Fallback>
+                    <DriveThruGate object="{target_obj}"/>
+                </Sequence>
+
+                <!-- Branch 2: Gate not found, look for objects directly, lock on and surge -->
+                <Sequence name="skip_gate_find_objects">
+                    <Fallback name="find_objects_directly">
+                        <FindAnyObject objects="search_and_rescue,repair_and_survey" found_object="{target_obj}"/>
+                        <Do360TurnAny objects="search_and_rescue,repair_and_survey" found_object="{target_obj}"/>
+                    </Fallback>
+                    <DriveThruGate object="{target_obj}"/>
+                </Sequence>
+            </Fallback>
         </Sequence>
     </BehaviorTree>
-        <TreeNodesModel>
+
+    <TreeNodesModel>
         <Action ID="AllSystemsOK">
-            <input_port name="timeout_s" type="double" default="20.0">Seconds to wait before aborting system check</input_port>
+            <input_port name="timeout_s" type="double" default="20.0"/>
         </Action>
         <Condition ID="IsObjectSeen">
-            <input_port name="object" type="std::string">GATE or POLE</input_port>
+            <input_port name="object" type="std::string"/>
+        </Condition>
+        <Condition ID="FindAnyObject">
+            <input_port name="objects" type="std::string"/>
+            <output_port name="found_object" type="std::string"/>
         </Condition>
         <Action ID="DiveToDepth">
-            <input_port name="target_depth" type="double">Depth to dive to</input_port>
+            <input_port name="target_depth" type="double"/>
         </Action>
         <Action ID="Do360Turn">
-            <input_port name="success_when_seen" type="std::string">Stop when object is seen</input_port>
+            <input_port name="success_when_seen" type="std::string"/>
+        </Action>
+        <Action ID="Do360TurnAny">
+            <input_port name="objects" type="std::string"/>
+            <output_port name="found_object" type="std::string"/>
+        </Action>
+        <Action ID="CenterObject">
+            <input_port name="object" type="std::string"/>
+        </Action>
+        <Action ID="DriveThruGate">
+            <input_port name="object" type="std::string"/>
         </Action>
     </TreeNodesModel>
 </root>
-
-
