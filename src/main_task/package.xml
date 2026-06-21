@@ -17,6 +17,7 @@
   <depend>auv_msgs</depend>
   <depend>tf2</depend>
   <depend>ament_index_cpp</depend>
+  <depend>diagnostic_msgs</depend>
 
   <build_depend>behaviortree_cpp</build_depend>
   <exec_depend>behaviortree_cpp</exec_depend>

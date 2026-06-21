@@ -16,12 +16,16 @@ int main(int argc, char** argv) {
     node->declare_parameter("base_surge_speed", 0.1);
     node->declare_parameter("base_yaw_speed", 0.1);
     node->declare_parameter("gate_conf_thresh", 0.6);
+    node->declare_parameter("pole_conf_thresh", 0.3);
     node->declare_parameter("depth_tolerance", 0.15);
+    node->declare_parameter("pole_approach_threshold", 1.0);
 
     ctx->base_surge_speed = node->get_parameter("base_surge_speed").as_double();
     ctx->base_yaw_speed = node->get_parameter("base_yaw_speed").as_double();
     ctx->gate_conf_thresh = node->get_parameter("gate_conf_thresh").as_double();
+    ctx->pole_conf_thresh = node->get_parameter("pole_conf_thresh").as_double();
     ctx->depth_tolerance = node->get_parameter("depth_tolerance").as_double();
+    ctx->pole_approach_threshold = node->get_parameter("pole_approach_threshold").as_double();
 
     // Actuator Publisher
     ctx->pico_pub = node->create_publisher<auv_msgs::msg::ControlCommand>("/control_cmd", 10);
@@ -52,6 +56,28 @@ int main(int argc, char** argv) {
             ctx->latest_detections = msg;
         });
 
+    // ZED Diagnostics Subscription
+    ctx->zed_diag_sub = node->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
+        "/zed2i_front/zed_node/diagnostic", 10,
+        [ctx](const diagnostic_msgs::msg::DiagnosticArray::SharedPtr msg) {
+            std::lock_guard<std::mutex> g(ctx->mtx);
+            for (const auto& status : msg->status) {
+                if (status.name.find("zed") != std::string::npos ||
+                    status.name.find("ZED") != std::string::npos) {
+                    ctx->zed_ok = (status.level <= 1); // 0 = OK, 1 = WARN
+                }
+            }
+        });
+
+    // ZED Image stream Subscription
+    ctx->image_sub = node->create_subscription<sensor_msgs::msg::Image>(
+        "/zed2i_front/zed_node/rgb/color/rect/image", 10,
+        [ctx](const sensor_msgs::msg::Image::SharedPtr) {
+            std::lock_guard<std::mutex> g(ctx->mtx);
+            ctx->image_received = true;
+            ctx->last_image_t   = ctx->node->get_clock()->now().seconds();
+        });
+
     // 2. Initialize the Behavior Tree Factory
     BT::BehaviorTreeFactory factory;
     registerAllNodes(factory);
@@ -59,10 +85,11 @@ int main(int argc, char** argv) {
     // Load XML files from the installation share directory
     std::string share_dir = ament_index_cpp::get_package_share_directory("main_task");
 
-    // Register the StartGate subtree first
+    // Register the StartGate and AlignObject subtrees first
     factory.registerBehaviorTreeFromFile(share_dir + "/start_gate.xml");
+    factory.registerBehaviorTreeFromFile(share_dir + "/alignobject.xml");
 
-    // Build the Main Tree (which calls StartGate)
+    // Build the Main Tree (which calls subtrees)
     auto tree = factory.createTreeFromFile(share_dir + "/main_task.xml");
 
     // Inject our Robot Context into the tree blackboard

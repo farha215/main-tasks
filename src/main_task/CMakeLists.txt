@@ -53,6 +53,7 @@ install(TARGETS main_task_node
 install(FILES 
     main_task.xml
     start_gate.xml
+    src/alignobject.xml
     DESTINATION share/${PROJECT_NAME}
 )
 

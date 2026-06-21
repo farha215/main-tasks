@@ -42,10 +42,12 @@ struct RobotContext {
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub;
 
     // --- MISSION CONFIGURATION (LOADED VIA YAML) ---
-    float base_surge_speed = 0.1f;
+    float base_surge_speed = 1.5f;
     float base_yaw_speed = 0.1f;
     float gate_conf_thresh = 0.6f;
+    float pole_conf_thresh = 0.3f;
     float depth_tolerance = 0.15f;
+    float pole_approach_threshold = 1.0f;
 
     double getCurrentYaw() {
         std::lock_guard<std::mutex> g(mtx);
@@ -73,15 +75,13 @@ struct RobotContext {
             const auto &id = hyp.class_id;
             const auto &score = hyp.score;
 
-            if (score < gate_conf_thresh)
-                continue;
-
-            if (object == "GATE" && 
-                (id == "left_gate_pole" || id == "right_gate_pole" || 
-                 id == "preq_gate" || id == "search&rescue" || id == "preq_pole"))
+            if ((object == "GATE" || object == "main_gate") && id == "main_gate" && score >= gate_conf_thresh)
                 return true;
-
-            if (object == "shark" && id == "shark")
+            if (object == "repair_and_survey" && id == "repair_and_survey" && score >= gate_conf_thresh)
+                return true;
+            if (object == "search_and_rescue" && id == "search_and_rescue" && score >= gate_conf_thresh)
+                return true;
+            if ((object == "prequal_pole" || object == "POLE") && id == "preq_pole" && score >= pole_conf_thresh)
                 return true;
         }
         return false;
@@ -93,90 +93,40 @@ struct RobotContext {
         if (!latest_detections)
             return false;
 
-        if (object == "GATE") {
-            bool has_left = false;
-            bool has_right = false;
-            double lx = 0.0, ly = 0.0, lz = 0.0, l_score = 0.0;
-            double rx = 0.0, ry = 0.0, rz = 0.0, r_score = 0.0;
-            double fallback_x = 0.0, fallback_y = 0.0, fallback_z = 0.0, fallback_score = 0.0;
-            bool has_fallback = false;
+        for (const auto &det : latest_detections->detections) {
+            if (det.results.empty())
+                continue;
+            const auto &hyp = det.results[0].hypothesis;
+            const auto &id = hyp.class_id;
+            const auto &score = hyp.score;
 
-            for (const auto &det : latest_detections->detections) {
-                if (det.results.empty())
-                    continue;
-                const auto &hyp = det.results[0].hypothesis;
-                const auto &id = hyp.class_id;
-                const auto &score = hyp.score;
-
-                if (score < gate_conf_thresh)
-                    continue;
-
-                if (id == "left_gate_pole") {
-                    has_left = true;
-                    lx = det.bbox.center.position.x;
-                    ly = det.bbox.center.position.y;
-                    lz = det.bbox.center.position.z;
-                    l_score = score;
-                } else if (id == "right_gate_pole") {
-                    has_right = true;
-                    rx = det.bbox.center.position.x;
-                    ry = det.bbox.center.position.y;
-                    rz = det.bbox.center.position.z;
-                    r_score = score;
-                } else if (id == "preq_gate" || id == "search&rescue" || id == "preq_pole") {
-                    has_fallback = true;
-                    fallback_x = det.bbox.center.position.x;
-                    fallback_y = det.bbox.center.position.y;
-                    fallback_z = det.bbox.center.position.z;
-                    fallback_score = score;
-                }
-            }
-
-            if (has_left && has_right) {
-                ox = (lx + rx) / 2.0;
-                oy = (ly + ry) / 2.0;
-                oz = (lz + rz) / 2.0;
-                if (score_out)
-                    *score_out = (l_score + r_score) / 2.0;
-                return true;
-            } else if (has_left) {
-                ox = lx + 0.75;
-                oy = ly;
-                oz = lz;
-                if (score_out)
-                    *score_out = l_score;
-                return true;
-            } else if (has_right) {
-                ox = rx - 0.75;
-                oy = ry;
-                oz = rz;
-                if (score_out)
-                    *score_out = r_score;
-                return true;
-            } else if (has_fallback) {
-                ox = fallback_x;
-                oy = fallback_y;
-                oz = fallback_z;
-                if (score_out)
-                    *score_out = fallback_score;
+            if ((object == "GATE" || object == "main_gate") && id == "main_gate" && score >= gate_conf_thresh) {
+                ox = det.bbox.center.position.x;
+                oy = det.bbox.center.position.y;
+                oz = det.bbox.center.position.z;
+                if (score_out) *score_out = score;
                 return true;
             }
-        } else if (object == "shark") {
-            for (const auto &det : latest_detections->detections) {
-                if (det.results.empty())
-                    continue;
-                const auto &hyp = det.results[0].hypothesis;
-                const auto &id = hyp.class_id;
-                const auto &score = hyp.score;
-
-                if (id == "shark" && score >= gate_conf_thresh) {
-                    ox = det.bbox.center.position.x;
-                    oy = det.bbox.center.position.y;
-                    oz = det.bbox.center.position.z;
-                    if (score_out)
-                        *score_out = score;
-                    return true;
-                }
+            if (object == "repair_and_survey" && id == "repair_and_survey" && score >= gate_conf_thresh) {
+                ox = det.bbox.center.position.x;
+                oy = det.bbox.center.position.y;
+                oz = det.bbox.center.position.z;
+                if (score_out) *score_out = score;
+                return true;
+            }
+            if (object == "search_and_rescue" && id == "search_and_rescue" && score >= gate_conf_thresh) {
+                ox = det.bbox.center.position.x;
+                oy = det.bbox.center.position.y;
+                oz = det.bbox.center.position.z;
+                if (score_out) *score_out = score;
+                return true;
+            }
+            if ((object == "prequal_pole" || object == "POLE") && id == "preq_pole" && score >= pole_conf_thresh) {
+                ox = det.bbox.center.position.x;
+                oy = det.bbox.center.position.y;
+                oz = det.bbox.center.position.z;
+                if (score_out) *score_out = score;
+                return true;
             }
         }
         return false;
@@ -293,11 +243,26 @@ private:
     double filtered_yaw_err_ = 0.0;
 };
 
+class AlignAndApproachObject : public BT::StatefulActionNode {
+public:
+    AlignAndApproachObject(const std::string &name, const BT::NodeConfig &config)
+            : BT::StatefulActionNode(name, config) {}
+    static BT::PortsList providedPorts() {
+        return {BT::InputPort<std::string>("object")};
+    }
+    BT::NodeStatus onStart() override;
+    BT::NodeStatus onRunning() override;
+    void onHalted() override;
+
+private:
+    std::string target_object_;
+};
+
 inline void registerAllNodes(BT::BehaviorTreeFactory &factory) {
     factory.registerNodeType<AllSystemsOK>("AllSystemsOK");
     factory.registerNodeType<DiveToDepth>("DiveToDepth");
     factory.registerNodeType<IsObjectSeen>("IsObjectSeen");
     factory.registerNodeType<Do360Turn>("Do360Turn");
     factory.registerNodeType<DriveThruGate>("DriveThruGate");
+    factory.registerNodeType<AlignAndApproachObject>("AlignAndApproachObject");
 }
-// Behavior tree node declarations and RobotContext will go here

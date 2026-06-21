@@ -193,8 +193,8 @@ BT::NodeStatus DriveThruGate::onRunning() {
     rclcpp::spin_some(ctx->node);
 
     double ox, oy, oz, score = 0.0;
-    // Try to locate target object ("shark" first, fallback to "GATE")
-    bool seen = ctx->getObjectPosition("shark", ox, oy, oz, &score);
+    // Try to locate target object ("main_gate" first, fallback to "GATE")
+    bool seen = ctx->getObjectPosition("main_gate", ox, oy, oz, &score);
     if (!seen) {
         seen = ctx->getObjectPosition("GATE", ox, oy, oz, &score);
     }
@@ -354,5 +354,55 @@ BT::NodeStatus DriveThruGate::onRunning() {
 }
 
 void DriveThruGate::onHalted() {
+    getCtx(config())->stopMotion();
+}
+
+// --- AlignAndApproachObject --------------------------------------------------
+
+BT::NodeStatus AlignAndApproachObject::onStart() {
+    auto obj = getInput<std::string>("object");
+    if (!obj) throw BT::RuntimeError("AlignAndApproachObject: missing [object]");
+    target_object_ = obj.value();
+
+    auto ctx = getCtx(config());
+    RCLCPP_INFO(ctx->node->get_logger(), "[AlignAndApproachObject] Starting approach to %s", target_object_.c_str());
+    return BT::NodeStatus::RUNNING;
+}
+
+BT::NodeStatus AlignAndApproachObject::onRunning() {
+    auto ctx = getCtx(config());
+    rclcpp::spin_some(ctx->node);
+
+    double ox, oy, oz, score = 0.0;
+    bool seen = ctx->getObjectPosition(target_object_, ox, oy, oz, &score);
+
+    if (!seen) {
+        ctx->publishToPico(0.0f, 0.0f, (float)ctx->target_depth, 0);
+        RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 1000,
+                             "[AlignAndApproachObject] Target %s not seen, holding still.", target_object_.c_str());
+        return BT::NodeStatus::RUNNING;
+    }
+
+    if (oz <= ctx->pole_approach_threshold) {
+        ctx->stopMotion();
+        RCLCPP_INFO(ctx->node->get_logger(), "[AlignAndApproachObject] Target %s reached threshold distance %.2f m <= %.2f m. SUCCESS.",
+                    target_object_.c_str(), oz, ctx->pole_approach_threshold);
+        return BT::NodeStatus::SUCCESS;
+    }
+
+    double raw_norm_x = ox / std::max(oz, 0.5);
+    double error = -raw_norm_x;
+    float yaw_cmd = (float)error;
+    yaw_cmd = std::max(-ctx->base_yaw_speed, std::min(ctx->base_yaw_speed, yaw_cmd));
+
+    ctx->publishToPico(yaw_cmd, ctx->base_surge_speed, (float)ctx->target_depth, 0);
+    RCLCPP_INFO_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 500,
+                         "[AlignAndApproachObject] Approaching %s: dist = %.2f m, yaw_cmd = %.3f", 
+                         target_object_.c_str(), oz, yaw_cmd);
+
+    return BT::NodeStatus::RUNNING;
+}
+
+void AlignAndApproachObject::onHalted() {
     getCtx(config())->stopMotion();
 }
