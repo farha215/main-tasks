@@ -27,6 +27,35 @@ int main(int argc, char** argv) {
     ctx->depth_tolerance = node->get_parameter("depth_tolerance").as_double();
     ctx->pole_approach_threshold = node->get_parameter("pole_approach_threshold").as_double();
 
+    // Register callback for live dynamic parameter tuning
+    auto param_callback_handle = node->add_on_set_parameters_callback(
+        [ctx](const std::vector<rclcpp::Parameter> &parameters) {
+            rcl_interfaces::msg::SetParametersResult result;
+            result.successful = true;
+            for (const auto &param : parameters) {
+                if (param.get_name() == "base_surge_speed") {
+                    ctx->base_surge_speed = param.as_double();
+                    RCLCPP_INFO(ctx->node->get_logger(), "Live Tune: base_surge_speed -> %.2f", ctx->base_surge_speed);
+                } else if (param.get_name() == "base_yaw_speed") {
+                    ctx->base_yaw_speed = param.as_double();
+                    RCLCPP_INFO(ctx->node->get_logger(), "Live Tune: base_yaw_speed -> %.2f", ctx->base_yaw_speed);
+                } else if (param.get_name() == "gate_conf_thresh") {
+                    ctx->gate_conf_thresh = param.as_double();
+                    RCLCPP_INFO(ctx->node->get_logger(), "Live Tune: gate_conf_thresh -> %.2f", ctx->gate_conf_thresh);
+                } else if (param.get_name() == "pole_conf_thresh") {
+                    ctx->pole_conf_thresh = param.as_double();
+                    RCLCPP_INFO(ctx->node->get_logger(), "Live Tune: pole_conf_thresh -> %.2f", ctx->pole_conf_thresh);
+                } else if (param.get_name() == "depth_tolerance") {
+                    ctx->depth_tolerance = param.as_double();
+                    RCLCPP_INFO(ctx->node->get_logger(), "Live Tune: depth_tolerance -> %.2f", ctx->depth_tolerance);
+                } else if (param.get_name() == "pole_approach_threshold") {
+                    ctx->pole_approach_threshold = param.as_double();
+                    RCLCPP_INFO(ctx->node->get_logger(), "Live Tune: pole_approach_threshold -> %.2f", ctx->pole_approach_threshold);
+                }
+            }
+            return result;
+        });
+
     // Actuator Publisher
     ctx->pico_pub = node->create_publisher<auv_msgs::msg::ControlCommand>("/control_cmd", 10);
 
