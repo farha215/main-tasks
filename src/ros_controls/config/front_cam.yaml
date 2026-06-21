@@ -26,7 +26,7 @@
             confidence_threshold: 50.0
             max_range: 15.0
 
-            custom_onnx_input_size: 1280 
+            custom_onnx_input_size: 640 
             custom_obj_det_config_file: '/home/cupcake/Desktop/deuterium/src/ros_controls/config/custom_yolo.yaml'
       
             custom_class_count: 5 
