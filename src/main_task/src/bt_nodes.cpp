@@ -420,6 +420,7 @@ BT::NodeStatus CenterObject::onStart() {
 
     align_confirm_frames_ = 0;
     filtered_yaw_err_ = 0.0;
+    is_holding_ = false;
 
     RCLCPP_INFO(ctx->node->get_logger(), "[CenterObject] Starting to center on %s.", target_object_.c_str());
     return BT::NodeStatus::RUNNING;
@@ -439,15 +440,32 @@ BT::NodeStatus CenterObject::onRunning() {
         return BT::NodeStatus::RUNNING;
     }
 
+    if (is_holding_) {
+        ctx->publishToPico(0.0f, 0.0f, (float)ctx->target_depth, 0);
+        auto now = std::chrono::steady_clock::now();
+        double elapsed = std::chrono::duration<double>(now - hold_start_time_).count();
+        if (elapsed >= ctx->gate_staystill_time) {
+            ctx->stopMotion();
+            RCLCPP_INFO(ctx->node->get_logger(), "[CenterObject] Hold complete. Centering finished!");
+            return BT::NodeStatus::SUCCESS;
+        }
+        RCLCPP_INFO_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 500,
+                             "[CenterObject] Holding position for %.1f / %.1f sec...", 
+                             elapsed, ctx->gate_staystill_time);
+        return BT::NodeStatus::RUNNING;
+    }
+
     double raw_norm_x = ox / std::max(oz, 0.5);
     constexpr double ALIGN_THRESHOLD = 0.05;
 
     if (std::abs(raw_norm_x) < ALIGN_THRESHOLD) {
         align_confirm_frames_++;
         if (align_confirm_frames_ >= 10) {
-            ctx->stopMotion();
-            RCLCPP_INFO(ctx->node->get_logger(), "[CenterObject] Centered on %s successfully.", target_object_.c_str());
-            return BT::NodeStatus::SUCCESS;
+            is_holding_ = true;
+            hold_start_time_ = std::chrono::steady_clock::now();
+            RCLCPP_INFO(ctx->node->get_logger(), "[CenterObject] Centered on %s. Starting hold for %.1f seconds.", 
+                        target_object_.c_str(), ctx->gate_staystill_time);
+            return BT::NodeStatus::RUNNING;
         }
     } else {
         align_confirm_frames_ = 0;

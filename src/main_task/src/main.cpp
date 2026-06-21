@@ -19,6 +19,7 @@ int main(int argc, char** argv) {
     node->declare_parameter("pole_conf_thresh", 0.3);
     node->declare_parameter("depth_tolerance", 0.15);
     node->declare_parameter("pole_approach_threshold", 1.0);
+    node->declare_parameter("gate_staystill_time", 3.0);
 
     ctx->base_surge_speed = node->get_parameter("base_surge_speed").as_double();
     ctx->base_yaw_speed = node->get_parameter("base_yaw_speed").as_double();
@@ -26,6 +27,7 @@ int main(int argc, char** argv) {
     ctx->pole_conf_thresh = node->get_parameter("pole_conf_thresh").as_double();
     ctx->depth_tolerance = node->get_parameter("depth_tolerance").as_double();
     ctx->pole_approach_threshold = node->get_parameter("pole_approach_threshold").as_double();
+    ctx->gate_staystill_time = node->get_parameter("gate_staystill_time").as_double();
 
     // Register callback for live dynamic parameter tuning
     auto param_callback_handle = node->add_on_set_parameters_callback(
@@ -51,6 +53,9 @@ int main(int argc, char** argv) {
                 } else if (param.get_name() == "pole_approach_threshold") {
                     ctx->pole_approach_threshold = param.as_double();
                     RCLCPP_INFO(ctx->node->get_logger(), "Live Tune: pole_approach_threshold -> %.2f", ctx->pole_approach_threshold);
+                } else if (param.get_name() == "gate_staystill_time") {
+                    ctx->gate_staystill_time = param.as_double();
+                    RCLCPP_INFO(ctx->node->get_logger(), "Live Tune: gate_staystill_time -> %.2f", ctx->gate_staystill_time);
                 }
             }
             return result;

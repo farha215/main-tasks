@@ -48,6 +48,7 @@ struct RobotContext {
     float pole_conf_thresh = 0.3f;
     float depth_tolerance = 0.15f;
     float pole_approach_threshold = 1.0f;
+    float gate_staystill_time = 3.0f;
 
     double getCurrentYaw() {
         std::lock_guard<std::mutex> g(mtx);
@@ -240,6 +241,8 @@ private:
     std::string target_object_;
     int align_confirm_frames_ = 0;
     double filtered_yaw_err_ = 0.0;
+    bool is_holding_ = false;
+    std::chrono::steady_clock::time_point hold_start_time_;
 };
 
 class FindAnyObject : public BT::ConditionNode {
