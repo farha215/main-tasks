@@ -11,61 +11,26 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
 
     <BehaviorTree ID="PreQualification_Task">
         <Sequence name="main_mission">
-            <!-- 0. SYSTEMS CHECK -->
-            <!-- NOTE: Change timeout_s here to give sensors more time to come online -->
+
             <AllSystemsOK name="check_systems" timeout_s="20.0"/>
 
-            <!-- 1. INITIALIZE -->
-            <!-- NOTE: Change target_depth here (meters, positive-down) for the initial dive -->
-            <DiveToDepth target_depth="0.90"/>
+            <DiveToDepth target_depth="0.20"/>
 
-            <!-- 2. GATE MISSION -->
-            
-            <!-- NOTE: Change 'threshold' here to set how close to get to the gate before passing -->
-            <!-- <ApproachObject object="GATE" threshold="60"/> -->
-            
-            <!-- NOTE: Surge through and clear the gate (Uses frame-counting in C++) -->
+            <ApproachObject object="GATE" threshold="80" angle="0.0"/>
+            <ApproachObject object="GATE" threshold="20" angle="0.0"/>
 
-            <ApproachObject object="GATE" threshold="10"/>
+            <DiveToDepth target_depth="0.20"/>
 
+            <ApproachObject object="POLE" threshold="200" angle="0.0"/>
 
-            <!-- 3. POLE MISSION -->
-            <!-- <Fallback name="find_pole">
-                <IsObjectSeen object="POLE"/>
-                <Do360Turn success_when_seen="POLE"/>
-            </Fallback> -->
-            
-            <!-- NOTE: Change 'threshold' here to set the radius of the orbit approach -->
-                        <DiveToDepth target_depth="0.40"/>
-
-            <ApproachObject object="POLE" threshold="200"/>
-
-
-            <!-- NOTE: 4-leg square orbit. Pauses 3s at threshold, then X, 2X, 2X, 2X surges.
-                 Surge duration X is orbit_surge_duration in mission_params.yaml. -->
             <OrbitPole object="POLE" staystill="3.0"/>
 
-                        <ApproachObject object="POLE" threshold="155"/>
-                                    <ApproachObject object="GATE" threshold="10"/>
-                                                <ApproachObject object="GATE" threshold="60"/>
-
+            <ApproachObject object="POLE" threshold="100" angle="0.0"/>
+            <!-- <ApproachObject object="GATE" threshold="10" angle="0.0"/> -->
+            <!-- <ApproachObject object="GATE" threshold="60" angle="0.0"/> -->
 
             <DiveToDepth target_depth="-0.10"/>
 
-            <!-- 4. RETURN HOME (Reactive) -->
-            <!-- <Fallback name="find_gate_home">
-                <IsObjectSeen object="GATE"/>
-                <Do360Turn success_when_seen="GATE"/>
-            </Fallback> -->
-
-            <!-- NOTE: Approach home gate to threshold -->
-
-
-            <!-- NOTE: Clear home gate -->
-
-
-            <!-- 5. SURFACE -->
-            <!-- <DiveToDepth target_depth="0.0"/> -->
         </Sequence>
     </BehaviorTree>
 
@@ -85,6 +50,7 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
         <Action ID="ApproachObject">
             <input_port name="object" type="std::string">Object to approach</input_port>
             <input_port name="threshold" type="double">Target distance</input_port>
+            <input_port name="angle" type="double" default="0.0">Approach angle</input_port>
         </Action>
         <Action ID="DriveThruGate"/>
         <Action ID="OrbitPole">

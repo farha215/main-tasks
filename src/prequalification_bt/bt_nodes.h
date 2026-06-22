@@ -48,7 +48,7 @@ struct RobotContext {
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr alt_sub;
   rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr det_sub;
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
-      zed_diag_sub;
+    zed_diag_sub;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub;
 
   // --- MISSION CONFIGURATION (LOADED VIA YAML) ---
@@ -71,7 +71,7 @@ struct RobotContext {
     std::lock_guard<std::mutex> g(mtx);
     if (latest_imu) {
       tf2::Quaternion q(latest_imu->orientation.x, latest_imu->orientation.y,
-                        latest_imu->orientation.z, latest_imu->orientation.w);
+        latest_imu->orientation.z, latest_imu->orientation.w);
       double roll, pitch, yaw;
       tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
       return yaw;
@@ -82,16 +82,16 @@ struct RobotContext {
   /**
    * @brief Checks if a specific object is currently detected.
    */
-  bool isObjectSeen(const std::string &object) {
+  bool isObjectSeen(const std::string& object) {
     std::lock_guard<std::mutex> g(mtx);
     if (!latest_detections)
       return false;
-    for (const auto &det : latest_detections->detections) {
+    for (const auto& det : latest_detections->detections) {
       if (det.results.empty())
         continue;
-      const auto &hyp = det.results[0].hypothesis;
-      const auto &id = hyp.class_id;
-      const auto &score = hyp.score;
+      const auto& hyp = det.results[0].hypothesis;
+      const auto& id = hyp.class_id;
+      const auto& score = hyp.score;
 
       if (object == "GATE" && id == "preq_gate" && score >= gate_conf_thresh)
         return true;
@@ -104,23 +104,23 @@ struct RobotContext {
   /**
    * @brief Gets the 3D position of a detected object.
    */
-  bool getObjectPosition(const std::string &object, double &ox, double &oy,
-                         double &oz, double *score_out = nullptr) {
+  bool getObjectPosition(const std::string& object, double& ox, double& oy,
+    double& oz, double* score_out = nullptr) {
     std::lock_guard<std::mutex> g(mtx);
     if (!latest_detections)
       return false;
 
-    for (const auto &det : latest_detections->detections) {
+    for (const auto& det : latest_detections->detections) {
       if (det.results.empty())
         continue;
-      const auto &hyp = det.results[0].hypothesis;
-      const auto &id = hyp.class_id;
-      const auto &score = hyp.score;
+      const auto& hyp = det.results[0].hypothesis;
+      const auto& id = hyp.class_id;
+      const auto& score = hyp.score;
 
       if (((object == "GATE" && id == "preq_gate" &&
-            score >= gate_conf_thresh) ||
-           (object == "POLE" && id == "preq_pole" &&
-            score >= pole_conf_thresh))) {
+        score >= gate_conf_thresh) ||
+        (object == "POLE" && id == "preq_pole" &&
+          score >= pole_conf_thresh))) {
         ox = det.bbox.center.position.x;
         oy = det.bbox.center.position.y;
         oz = det.bbox.center.position.z;
@@ -132,7 +132,7 @@ struct RobotContext {
   }
 
   void publishToPico(float delta_theta, float delta_distance,
-                     float target_depth_val, uint8_t stop_thrusters) {
+    float target_depth_val, uint8_t stop_thrusters) {
     auv_msgs::msg::ControlCommand msg;
     msg.delta_theta = delta_theta;
     msg.delta_distance = delta_distance;
@@ -161,11 +161,11 @@ inline double normalizeAngle(double a) {
 
 class AllSystemsOK : public BT::StatefulActionNode {
 public:
-  AllSystemsOK(const std::string &name, const BT::NodeConfig &config)
-      : BT::StatefulActionNode(name, config) {}
+  AllSystemsOK(const std::string& name, const BT::NodeConfig& config)
+    : BT::StatefulActionNode(name, config) {}
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<double>("timeout_s", 20.0,
-                                 "Seconds to wait before giving up")};
+    return { BT::InputPort<double>("timeout_s", 20.0,
+                                 "Seconds to wait before giving up") };
   }
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
@@ -178,10 +178,10 @@ private:
 
 class IsObjectSeen : public BT::ConditionNode {
 public:
-  IsObjectSeen(const std::string &name, const BT::NodeConfig &config)
-      : BT::ConditionNode(name, config) {}
+  IsObjectSeen(const std::string& name, const BT::NodeConfig& config)
+    : BT::ConditionNode(name, config) {}
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<std::string>("object")};
+    return { BT::InputPort<std::string>("object") };
   }
   BT::NodeStatus tick() override;
 };
@@ -190,10 +190,10 @@ public:
 
 class DiveToDepth : public BT::StatefulActionNode {
 public:
-  DiveToDepth(const std::string &name, const BT::NodeConfig &config)
-      : BT::StatefulActionNode(name, config) {}
+  DiveToDepth(const std::string& name, const BT::NodeConfig& config)
+    : BT::StatefulActionNode(name, config) {}
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<double>("target_depth")};
+    return { BT::InputPort<double>("target_depth") };
   }
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
@@ -205,10 +205,10 @@ private:
 
 class Do360Turn : public BT::StatefulActionNode {
 public:
-  Do360Turn(const std::string &name, const BT::NodeConfig &config)
-      : BT::StatefulActionNode(name, config) {}
+  Do360Turn(const std::string& name, const BT::NodeConfig& config)
+    : BT::StatefulActionNode(name, config) {}
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<std::string>("success_when_seen")};
+    return { BT::InputPort<std::string>("success_when_seen") };
   }
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
@@ -222,8 +222,8 @@ private:
 
 class DriveThruGate : public BT::StatefulActionNode {
 public:
-  DriveThruGate(const std::string &name, const BT::NodeConfig &config)
-      : BT::StatefulActionNode(name, config) {}
+  DriveThruGate(const std::string& name, const BT::NodeConfig& config)
+    : BT::StatefulActionNode(name, config) {}
   static BT::PortsList providedPorts() { return {}; }
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
@@ -235,11 +235,12 @@ private:
 
 class ApproachObject : public BT::StatefulActionNode {
 public:
-  ApproachObject(const std::string &name, const BT::NodeConfig &config)
-      : BT::StatefulActionNode(name, config) {}
+  ApproachObject(const std::string& name, const BT::NodeConfig& config)
+    : BT::StatefulActionNode(name, config) {}
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<std::string>("object"),
-            BT::InputPort<double>("threshold")};
+    return { BT::InputPort<std::string>("object"),
+      BT::InputPort<double>("threshold"),
+      BT::InputPort<double>("angle", 0.0, "Optional angle parameter") };
   }
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
@@ -247,6 +248,7 @@ public:
 
 private:
   std::string target_object_;
+  double angle_ = 0.0;
   double threshold_ = 1.5;
   float smoothed_norm_x_ = 0.0f;
   bool locked_ = false;
@@ -254,12 +256,12 @@ private:
 
 class OrbitPole : public BT::StatefulActionNode {
 public:
-  OrbitPole(const std::string &name, const BT::NodeConfig &config)
-      : BT::StatefulActionNode(name, config) {}
+  OrbitPole(const std::string& name, const BT::NodeConfig& config)
+    : BT::StatefulActionNode(name, config) {}
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<std::string>("object"),
+    return { BT::InputPort<std::string>("object"),
             BT::InputPort<double>("staystill", 0.0,
-                                  "Seconds to pause at threshold before orbiting")};
+                                  "Seconds to pause at threshold before orbiting") };
   }
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
@@ -280,7 +282,7 @@ private:
 /**
  * @brief Registration helper for the Behavior Tree factory.
  */
-inline void registerAllNodes(BT::BehaviorTreeFactory &factory) {
+inline void registerAllNodes(BT::BehaviorTreeFactory& factory) {
   factory.registerNodeType<AllSystemsOK>("AllSystemsOK");
   factory.registerNodeType<DiveToDepth>("DiveToDepth");
   factory.registerNodeType<IsObjectSeen>("IsObjectSeen");
