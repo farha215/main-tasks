@@ -231,6 +231,7 @@ public:
 
 private:
   int gate_lost_frames_ = 0;
+  double target_yaw_ = 0.0;
 };
 
 class ApproachObject : public BT::StatefulActionNode {
@@ -250,6 +251,7 @@ private:
   std::string target_object_;
   double angle_ = 0.0;
   double threshold_ = 1.5;
+  double target_yaw_ = 0.0;
   float smoothed_norm_x_ = 0.0f;
   bool locked_ = false;
 };

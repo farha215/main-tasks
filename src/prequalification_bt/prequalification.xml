@@ -16,18 +16,15 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
 
             <DiveToDepth target_depth="0.20"/>
 
-            <ApproachObject object="GATE" threshold="80" angle="0.0"/>
+            <ApproachObject object="GATE" threshold="50" angle="0.0"/>
             <ApproachObject object="GATE" threshold="20" angle="0.0"/>
-
-            <DiveToDepth target_depth="0.20"/>
-
-            <ApproachObject object="POLE" threshold="200" angle="0.0"/>
+            <ApproachObject object="POLE" threshold="90" angle="0.0"/>
 
             <OrbitPole object="POLE" staystill="3.0"/>
 
-            <ApproachObject object="POLE" threshold="100" angle="0.0"/>
-            <!-- <ApproachObject object="GATE" threshold="10" angle="0.0"/> -->
-            <!-- <ApproachObject object="GATE" threshold="60" angle="0.0"/> -->
+            <ApproachObject object="POLE" threshold="90" angle="3.229"/>
+            <ApproachObject object="GATE" threshold="20" angle="3.229"/>
+            <ApproachObject object="GATE" threshold="60" angle="3.229"/>
 
             <DiveToDepth target_depth="-0.10"/>
 
