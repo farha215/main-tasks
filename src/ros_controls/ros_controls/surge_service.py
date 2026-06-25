@@ -60,7 +60,7 @@ class SurgeDistanceNode(Node):
         # ── Parameters ───────────────────────────────────────────────────
         self.declare_parameter('rate_hz', 20.0)            # /control_cmd publish rate
         self.declare_parameter('dist_tol', 0.05)           # [m] arrival band
-        self.declare_parameter('odom_topic', '/odom')      # rtabmap odom
+        self.declare_parameter('odom_topic', '/zed2i_front/zed_node/odom')      # native zed odom
         self.declare_parameter('pressure_topic', '/pressure')
         self.declare_parameter('timeout', 2000.0)           # [s] max time per surge
         self.declare_parameter('odom_stale', 1.0)          # [s] odom freshness for a call
@@ -141,7 +141,21 @@ class SurgeDistanceNode(Node):
         with self.lock:
             cmd.target_depth = float(self.hold_depth if not self.active
                                      else self.target_depth)
-            if self.active and self.odom is not None:
+            
+            # --- CRITICAL FIX: Runaway AUV Prevention ---
+            age = 999.0
+            if self.odom_time is not None:
+                age = (self.get_clock().now() - self.odom_time).nanoseconds * 1e-9
+                
+            if self.active and age > self.odom_stale:
+                self.get_logger().error(f"ODOM LOST DURING SURGE ({age:.1f}s old)! KILLING THRUSTERS!")
+                self.active = False
+                self.result = (False, 'odom lost during surge')
+                self.done_evt.set()
+                cmd.delta_distance = 0.0
+                cmd.delta_theta = 0.0
+                cmd.stop_thrusters = 1
+            elif self.active and self.odom is not None:
                 travelled, yaw_err = self._progress()
                 remaining = self.target - travelled
                 if remaining <= self.dist_tol:
