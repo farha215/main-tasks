@@ -142,7 +142,7 @@ class SurgeDistanceNode(Node):
             cmd.target_depth = float(self.hold_depth if not self.active
                                      else self.target_depth)
             
-            # --- CRITICAL FIX: Runaway AUV Prevention ---
+            # Safety check: kill thrusters if odometry tracking is lost
             age = 999.0
             if self.odom_time is not None:
                 age = (self.get_clock().now() - self.odom_time).nanoseconds * 1e-9
