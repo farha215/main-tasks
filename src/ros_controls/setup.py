@@ -38,7 +38,7 @@ setup(
             'surge_service=ros_controls.surge_service:main',
             'combined_detections=ros_controls.combined_detections:main',
             'dataset_collector_front=ros_controls.dataset_collector_front:main',
-            'dataset_collector_down =ros_controls.dataset_collector_down:main',
+            'dataset_collector_down=ros_controls.dataset_collector_down:main',
         ],
     },
 )
