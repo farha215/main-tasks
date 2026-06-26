@@ -12,7 +12,7 @@
                 <SaveCurrentYaw/>
             </Sequence>
 
-            <!-- Step 2: Find the Picture -->
+            <!-- Step 2: Find the Picture trial -->
             <Fallback name="find_objects">
                 <FindAnyObject objects="search_and_rescue,repair_and_survey" found_object="{target_obj}"/>
                 <Do360TurnAny objects="search_and_rescue,repair_and_survey" found_object="{target_obj}"/>
