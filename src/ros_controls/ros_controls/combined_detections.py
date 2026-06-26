@@ -161,7 +161,9 @@ class UnifiedDetectionNode(Node):
             bbox     = (x1, y1, x2, y2)
 
             cls_id   = obj.label_id
-            cls_name = YOLO_CLASS_MAP.get(cls_id, "preq_gate")
+            cls_name = getattr(obj, 'label', '')
+            if not cls_name or cls_name == 'Unknown':
+                cls_name = YOLO_CLASS_MAP.get(cls_id, f"unknown_class_{cls_id}")
             conf     = float(obj.confidence) / 100.0
 
             pos      = (float(obj.position[1]),

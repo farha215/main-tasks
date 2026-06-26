@@ -17,7 +17,7 @@
       
       class_1:
         label: 'red_pole'
-        model_class_id: 0
+        model_class_id: 1
         enabled: true
         confidence_threshold: 50.0
         is_grounded: false
@@ -25,7 +25,7 @@
 
       class_2:
         label: 'repair_and_survey'
-        model_class_id: 0
+        model_class_id: 2
         enabled: true
         confidence_threshold: 50.0
         is_grounded: false
@@ -33,7 +33,7 @@
       
       class_3:
         label: 'white_pole'
-        model_class_id: 0
+        model_class_id: 3
         enabled: true
         confidence_threshold: 50.0
         is_grounded: false
@@ -41,7 +41,7 @@
       
       class_4:
         label: 'main_gate'
-        model_class_id: 0
+        model_class_id: 4
         enabled: true
         confidence_threshold: 50.1
         is_grounded: false
